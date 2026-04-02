@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Админ-панель</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+    <h1>Админ-панель</h1>
+    <div id="adminContent">
+        <h2>Пользователи</h2>
+        <table id="usersTable">
+            <thead><tr><th>ID</th><th>Email</th><th>Роль</th><th></th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <h2>Заявки</h2>
+        <table id="jobsTable">
+            <thead><tr><th>ID</th><th>Название</th><th>Описание</th><th>Удалить</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Нет токена, войдите сначала на главной странице');
+            location.href = '/';
+        }
+
+        async function loadUsers() {
+            const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+            if (!res.ok) return alert('Нет прав админа');
+            const users = await res.json();
+            const tbody = document.querySelector('#usersTable tbody');
+            tbody.innerHTML = '';
+            for (let u of users) {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = u.id;
+                row.insertCell(1).innerText = u.email;
+                const roleCell = row.insertCell(2);
+                const select = document.createElement('select');
+                ['candidate', 'employer', 'admin'].forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r;
+                    opt.innerText = r;
+                    if (u.role === r) opt.selected = true;
+                    select.appendChild(opt);
+                });
+                select.onchange = () => updateRole(u.id, select.value);
+                roleCell.appendChild(select);
+                row.insertCell(3).innerHTML = '';
+            }
+        }
+
+        async function updateRole(userId, newRole) {
+            const res = await fetch(`/api/users/${userId}/role`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ role: newRole })
+            });
+            if (res.ok) alert('Роль обновлена');
+            else alert('Ошибка');
+        }
+
+        async function loadJobs() {
+            const res = await fetch('/api/jobs');
+            const jobs = await res.json();
+            const tbody = document.querySelector('#jobsTable tbody');
+            tbody.innerHTML = '';
+            for (let j of jobs) {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = j.id;
+                row.insertCell(1).innerText = j.title;
+                row.insertCell(2).innerText = j.description;
+                const delCell = row.insertCell(3);
+                const delBtn = document.createElement('button');
+                delBtn.innerText = 'Удалить';
+                delBtn.onclick = () => deleteJob(j.id);
+                delCell.appendChild(delBtn);
+            }
+        }
+
+        async function deleteJob(jobId) {
+            if (!confirm('Удалить заявку?')) return;
+            const res = await fetch(`/api/jobs/${jobId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) loadJobs();
+            else alert('Ошибка');
+        }
+
+        loadUsers();
+        loadJobs();
+    </script>
+</body>
+</html>

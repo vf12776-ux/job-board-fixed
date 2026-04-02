@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Доска заявок</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .error { color: red; }
+        .job { border: 1px solid #ccc; margin: 10px 0; padding: 10px; }
+        button { margin: 5px; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Доска заявок</h1>
+        <div id="auth">
+            <h2>Вход / Регистрация</h2>
+            <input type="email" id="email" placeholder="Email"><br>
+            <input type="password" id="password" placeholder="Пароль"><br>
+            <select id="role">
+                <option value="candidate">Кандидат</option>
+                <option value="employer">Работодатель</option>
+            </select><br>
+            <button onclick="register()">Регистрация</button>
+            <button onclick="login()">Вход</button>
+            <div id="authError" class="error"></div>
+        </div>
+        <div id="userInfo" style="display:none">
+            <p>Вы вошли как <span id="userRole"></span> (<span id="userEmail"></span>)</p>
+            <button onclick="logout()">Выйти</button>
+            <hr>
+            <div id="jobForm" style="display:none">
+                <h3>Новая заявка</h3>
+                <input type="text" id="jobTitle" placeholder="Название"><br>
+                <textarea id="jobDesc" placeholder="Описание"></textarea><br>
+                <button onclick="createJob()">Создать</button>
+            </div>
+            <h2>Заявки</h2>
+            <div id="jobsList"></div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let user = null;
+
+        function showError(where, msg) {
+            document.getElementById(where).innerText = msg;
+            setTimeout(() => document.getElementById(where).innerText = '', 3000);
+        }
+
+        async function register() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, role })
+            });
+            if (res.ok) {
+                showError('authError', 'Регистрация успешна, войдите');
+            } else {
+                const err = await res.json();
+                showError('authError', err.error);
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                token = data.token;
+                user = data.user;
+                localStorage.setItem('token', token);
+                document.getElementById('auth').style.display = 'none';
+                document.getElementById('userInfo').style.display = 'block';
+                document.getElementById('userEmail').innerText = user.email;
+                document.getElementById('userRole').innerText = user.role;
+                if (user.role === 'employer' || user.role === 'admin') {
+                    document.getElementById('jobForm').style.display = 'block';
+                }
+                loadJobs();
+                if (user.role === 'admin') {
+                    const adminLink = document.createElement('div');
+                    adminLink.innerHTML = '<hr><a href="/admin" target="_blank">Перейти в админ-панель</a>';
+                    document.getElementById('userInfo').appendChild(adminLink);
+                }
+            } else {
+                const err = await res.json();
+                showError('authError', err.error);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            token = null;
+            user = null;
+            document.getElementById('auth').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'none';
+        }
+
+        async function loadJobs() {
+            const res = await fetch('/api/jobs');
+            const jobs = await res.json();
+            const container = document.getElementById('jobsList');
+            container.innerHTML = '';
+            for (let job of jobs) {
+                const div = document.createElement('div');
+                div.className = 'job';
+                div.innerHTML = `<strong>${job.title}</strong><br>${job.description}<br><small>${job.createdAt}</small>`;
+                container.appendChild(div);
+            }
+        }
+
+        async function createJob() {
+            const title = document.getElementById('jobTitle').value;
+            const description = document.getElementById('jobDesc').value;
+            const res = await fetch('/api/jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ title, description })
+            });
+            if (res.ok) {
+                document.getElementById('jobTitle').value = '';
+                document.getElementById('jobDesc').value = '';
+                loadJobs();
+            } else {
+                alert('Ошибка создания');
+            }
+        }
+
+        if (token) {
+            fetch('/api/jobs', { headers: { 'Authorization': `Bearer ${token}` } }).then(() => {
+                document.getElementById('auth').style.display = 'none';
+                document.getElementById('userInfo').style.display = 'block';
+                document.getElementById('userEmail').innerText = '?';
+                document.getElementById('userRole').innerText = '?';
+                loadJobs();
+            }).catch(() => localStorage.removeItem('token'));
+        }
+    </script>
+</body>
+</html>
