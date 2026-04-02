@@ -141,7 +141,7 @@ app.post('/api/jobs', auth, (req, res) => {
     [title, description, category || 'other', city || '', req.user.id, new Date().toISOString(), 'open'], 
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID, title, description, category, city });
+      res.json({ id: this.lastID, title, description, category, city, status: 'open' });
     });
 });
 
