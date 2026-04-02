@@ -171,6 +171,9 @@
 
         <!-- Блок для авторизованных (по умолчанию скрыт) -->
         <div id="mainApp" style="display: none;">
+            <div class="card" style="margin-bottom: 10px; background: var(--bg-card);">
+    <p>✅ Вы вошли как <strong id="userRoleDisplay"></strong> (город: <span id="userCityDisplay"></span>)</p>
+</div>
             <!-- Лента (главная) -->
             <div id="feedView">
                 <div class="card">
@@ -280,47 +283,70 @@
 
         // Загрузка ленты
         async function loadJobs() {
-            const cityFilter = document.getElementById('cityFilter').value;
-            let url = '/api/jobs';
-            if (cityFilter && cityFilter !== 'all') url += `?city=${encodeURIComponent(cityFilter)}`;
-            const res = await fetch(url);
-            const jobs = await res.json();
-            const container = document.getElementById('jobsList');
-            container.innerHTML = '';
-            if (jobs.length === 0) { container.innerHTML = '<p>Нет заявок</p>'; return; }
-            for (let job of jobs) {
-                const div = document.createElement('div');
-                div.className = 'job';
-                const categoryNames = { repair: '🔧 Ремонт', cleaning: '🧹 Уборка', delivery: '🚚 Доставка', it: '💻 IT', other: '📦 Другое' };
-                const categoryText = categoryNames[job.category] || job.category;
-                div.innerHTML = `
-                    <strong>${escapeHtml(job.title)}</strong>
-                    <div class="job-meta">
-                        <span>📂 ${categoryText}</span>
-                        <span>📍 ${job.city || 'Не указан'}</span>
-                        <span>📅 ${new Date(job.createdAt).toLocaleString()}</span>
-                    </div>
-                    <p>${escapeHtml(job.description)}</p>
-                    <div class="job-meta">
-                        <span>💰 Статус: ${job.status === 'open' ? '🔓 Открыта' : (job.status === 'taken' ? '🔨 В работе' : '✅ Завершена')}</span>
-                    </div>
-                `;
-                if (user && user.role === 'candidate' && job.status === 'open') {
-                    const respondBtn = document.createElement('button');
-                    respondBtn.innerText = '📞 Откликнуться';
-                    respondBtn.onclick = () => respondToJob(job.id);
-                    div.appendChild(respondBtn);
-                }
-                if (user && (user.role === 'employer' || user.role === 'admin') && job.status === 'open') {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.innerText = '❌ Удалить';
-                    deleteBtn.classList.add('danger-btn');
-                    deleteBtn.onclick = () => deleteJob(job.id);
-                    div.appendChild(deleteBtn);
-                }
-                container.appendChild(div);
-            }
+    const cityFilter = document.getElementById('cityFilter').value;
+    let url = '/api/jobs';
+    if (cityFilter && cityFilter !== 'all') url += `?city=${encodeURIComponent(cityFilter)}`;
+    const res = await fetch(url);
+    const jobs = await res.json();
+    const container = document.getElementById('jobsList');
+    container.innerHTML = '';
+    if (jobs.length === 0) { container.innerHTML = '<p>Нет заявок</p>'; return; }
+    for (let job of jobs) {
+        const div = document.createElement('div');
+        div.className = 'job';
+        const categoryNames = { repair: '🔧 Ремонт', cleaning: '🧹 Уборка', delivery: '🚚 Доставка', it: '💻 IT', other: '📦 Другое' };
+        const categoryText = categoryNames[job.category] || job.category;
+        div.innerHTML = `
+            <strong>${escapeHtml(job.title)}</strong>
+            <div class="job-meta">
+                <span>📂 ${categoryText}</span>
+                <span>📍 ${job.city || 'Не указан'}</span>
+                <span>📅 ${new Date(job.createdAt).toLocaleString()}</span>
+                <span>🏷️ Статус: ${job.status || 'open'}</span>
+            </div>
+            <p>${escapeHtml(job.description)}</p>
+        `;
+        
+        // Диагностика: выводим информацию, почему кнопка может не показываться
+        let showRespondButton = false;
+        let reason = '';
+        if (!user) {
+            reason = 'Вы не авторизованы';
+        } else if (user.role !== 'candidate') {
+            reason = `Ваша роль: ${user.role}, а нужен кандидат`;
+        } else if (job.status === 'taken') {
+            reason = 'Заявка уже взята в работу';
+        } else if (job.status === 'completed') {
+            reason = 'Заявка завершена';
+        } else {
+            showRespondButton = true;
         }
+        
+        if (showRespondButton) {
+            const respondBtn = document.createElement('button');
+            respondBtn.innerText = '📞 Откликнуться';
+            respondBtn.onclick = () => respondToJob(job.id);
+            div.appendChild(respondBtn);
+        } else if (user && user.role === 'candidate') {
+            // Показываем причину, почему кнопка не появилась (только для кандидатов)
+            const info = document.createElement('div');
+            info.style.fontSize = '0.7rem';
+            info.style.color = 'var(--text-secondary)';
+            info.innerText = `⚠️ ${reason}`;
+            div.appendChild(info);
+        }
+        
+        // Кнопка удаления для работодателя/админа
+        if (user && (user.role === 'employer' || user.role === 'admin') && job.status === 'open') {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerText = '❌ Удалить';
+            deleteBtn.classList.add('danger-btn');
+            deleteBtn.onclick = () => deleteJob(job.id);
+            div.appendChild(deleteBtn);
+        }
+        container.appendChild(div);
+    }
+}
 
         async function respondToJob(jobId) {
             const res = await fetch('/api/responses', {
@@ -445,6 +471,8 @@
                 authBlock.style.display = 'none';
                 mainApp.style.display = 'block';
                 bottomNav.style.display = 'flex';
+                document.getElementById('userRoleDisplay').innerText = user.role === 'candidate' ? 'Кандидат' : (user.role === 'employer' ? 'Работодатель' : 'Администратор');
+document.getElementById('userCityDisplay').innerText = user.city || 'не указан';
                 // Показать форму создания заявки для работодателя/админа
                 if (user.role === 'employer' || user.role === 'admin') createJobForm.style.display = 'block';
                 else createJobForm.style.display = 'none';
