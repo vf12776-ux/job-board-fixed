@@ -7,22 +7,15 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/icon-192.png">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: background 0.2s, color 0.2s, border 0.2s; }
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-body);
             color: var(--text-primary);
-            padding: 20px;
-            min-height: 100vh;
+            padding: 0;
+            padding-bottom: 70px;
         }
-
-        /* светлая тема (по умолчанию) */
+        /* светлая тема */
         body.light {
             --bg-body: #f3f4f6;
             --bg-card: #ffffff;
@@ -34,12 +27,9 @@
             --btn-primary: #3b82f6;
             --btn-primary-hover: #2563eb;
             --btn-danger: #ef4444;
-            --btn-danger-hover: #dc2626;
-            --btn-secondary: #9ca3af;
-            --btn-secondary-hover: #6b7280;
+            --btn-success: #10b981;
             --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
         }
-
         body.dark {
             --bg-body: #1f2937;
             --bg-card: #374151;
@@ -51,55 +41,31 @@
             --btn-primary: #3b82f6;
             --btn-primary-hover: #60a5fa;
             --btn-danger: #f87171;
-            --btn-danger-hover: #ef4444;
-            --btn-secondary: #6b7280;
-            --btn-secondary-hover: #4b5563;
+            --btn-success: #34d399;
             --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
         }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
+        .container { max-width: 800px; margin: 0 auto; padding: 16px; }
         .card {
             background: var(--bg-card);
             border-radius: 24px;
-            padding: 24px;
-            margin-bottom: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
             box-shadow: var(--shadow);
             border: 1px solid var(--border);
         }
-
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        h2 {
-            font-size: 1.4rem;
-            font-weight: 500;
-            margin-bottom: 16px;
-        }
-
+        h1 { font-size: 1.6rem; margin-bottom: 8px; }
+        h2 { font-size: 1.3rem; margin-bottom: 16px; }
         input, select, textarea {
             width: 100%;
             padding: 12px 16px;
             margin: 8px 0;
             border: 1px solid var(--input-border);
-            border-radius: 16px;
+            border-radius: 20px;
             background: var(--input-bg);
             color: var(--text-primary);
             font-size: 1rem;
             outline: none;
         }
-
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--btn-primary);
-            box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
-        }
-
         button {
             background: var(--btn-primary);
             color: white;
@@ -109,29 +75,9 @@
             font-size: 0.9rem;
             font-weight: 500;
             cursor: pointer;
-            margin-right: 8px;
-            margin-top: 8px;
+            margin: 4px 4px 0 0;
         }
-
-        button:hover {
-            background: var(--btn-primary-hover);
-            transform: scale(0.98);
-        }
-
-        .danger-btn {
-            background: var(--btn-danger);
-        }
-        .danger-btn:hover {
-            background: var(--btn-danger-hover);
-        }
-
-        .secondary-btn {
-            background: var(--btn-secondary);
-        }
-        .secondary-btn:hover {
-            background: var(--btn-secondary-hover);
-        }
-
+        button:hover { background: var(--btn-primary-hover); transform: scale(0.98); }
         .job {
             border: 1px solid var(--border);
             border-radius: 20px;
@@ -139,141 +85,350 @@
             margin-bottom: 12px;
             background: var(--bg-card);
         }
-
-        .job strong {
-            font-size: 1.2rem;
-        }
-
+        .job strong { font-size: 1.2rem; display: block; margin-bottom: 6px; }
+        .job-meta { font-size: 0.8rem; color: var(--text-secondary); margin: 8px 0; display: flex; gap: 12px; flex-wrap: wrap; }
         .theme-toggle {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 12px;
+            right: 12px;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 40px;
-            padding: 8px 16px;
+            padding: 6px 12px;
             cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
+            font-size: 0.8rem;
             z-index: 100;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 6px;
             box-shadow: var(--shadow);
         }
-
-        .error {
-            color: #ef4444;
-            font-size: 0.9rem;
-            margin-top: 8px;
+        /* нижнее меню */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 12px;
+            z-index: 200;
         }
-
-        hr {
-            margin: 16px 0;
-            border-color: var(--border);
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            cursor: pointer;
         }
-
-        @media (max-width: 640px) {
-            body { padding: 12px; }
-            .card { padding: 16px; }
-            h1 { font-size: 1.5rem; }
+        .nav-item.active { color: var(--btn-primary); }
+        .error { color: #ef4444; font-size: 0.8rem; margin-top: 8px; }
+        hr { margin: 12px 0; border-color: var(--border); }
+        .badge {
+            background: var(--btn-primary);
+            color: white;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            display: inline-block;
+            margin-left: 8px;
+        }
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .filter-bar select {
+            flex: 1;
+            margin: 0;
         }
     </style>
 </head>
 <body class="light">
     <div class="theme-toggle" id="themeToggle">☀️ Светлая тема</div>
-    <div class="container">
-        <div class="card" id="app">
+    <div class="container" id="app">
+        <!-- Блок для неавторизованных -->
+        <div id="authBlock" class="card">
             <h1>📋 Доска заявок</h1>
-            <div id="auth">
-                <h2>Вход / Регистрация</h2>
-                <input type="email" id="email" placeholder="Email" autocomplete="email">
-                <input type="password" id="password" placeholder="Пароль" autocomplete="current-password">
-                <select id="role">
-                    <option value="candidate">👤 Кандидат</option>
-                    <option value="employer">🏢 Работодатель</option>
-                </select>
-                <div>
-                    <button onclick="register()">Регистрация</button>
-                    <button onclick="login()" class="btn-primary">Вход</button>
-                </div>
-                <div id="authError" class="error"></div>
+            <h2>Вход / Регистрация</h2>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Пароль">
+            <select id="role">
+                <option value="candidate">👤 Кандидат</option>
+                <option value="employer">🏢 Работодатель</option>
+            </select>
+            <input type="text" id="city" placeholder="Город (например, Москва)">
+            <div>
+                <button onclick="register()">Регистрация</button>
+                <button onclick="login()">Вход</button>
             </div>
-            <div id="userInfo" style="display:none">
-                <p>✅ Вы вошли как <strong><span id="userRole"></span></strong> (<span id="userEmail"></span>)</p>
-                <button onclick="logout()" class="secondary-btn">Выйти</button>
-                <hr>
-                <div id="jobForm" style="display:none">
-                    <h3>➕ Новая заявка</h3>
-                    <input type="text" id="jobTitle" placeholder="Название вакансии">
-                    <textarea id="jobDesc" rows="3" placeholder="Описание..."></textarea>
-                    <button onclick="createJob()">Создать</button>
+            <div id="authError" class="error"></div>
+        </div>
+
+        <!-- Блок для авторизованных (по умолчанию скрыт) -->
+        <div id="mainApp" style="display: none;">
+            <!-- Лента (главная) -->
+            <div id="feedView">
+                <div class="card">
+                    <h2>📢 Лента заявок</h2>
+                    <div class="filter-bar">
+                        <select id="cityFilter">
+                            <option value="all">Все города</option>
+                        </select>
+                    </div>
+                    <div id="jobsList"></div>
                 </div>
-                <h2>📌 Все заявки</h2>
-                <div id="jobsList"></div>
+            </div>
+
+            <!-- Мои заявки (только для работодателя/админа) -->
+            <div id="myJobsView" style="display: none;">
+                <div class="card">
+                    <h2>📝 Мои заявки</h2>
+                    <div id="myJobsList"></div>
+                </div>
+            </div>
+
+            <!-- Мои отклики (для кандидата) -->
+            <div id="myResponsesView" style="display: none;">
+                <div class="card">
+                    <h2>💬 Мои отклики</h2>
+                    <div id="myResponsesList"></div>
+                </div>
+            </div>
+
+            <!-- Форма создания заявки (только для employer/admin) -->
+            <div id="createJobForm" class="card" style="margin-top: 16px; display: none;">
+                <h3>➕ Новая заявка</h3>
+                <input type="text" id="jobTitle" placeholder="Название услуги">
+                <textarea id="jobDesc" rows="3" placeholder="Описание"></textarea>
+                <select id="jobCategory">
+                    <option value="repair">🔧 Ремонт</option>
+                    <option value="cleaning">🧹 Уборка</option>
+                    <option value="delivery">🚚 Доставка</option>
+                    <option value="it">💻 IT-помощь</option>
+                    <option value="other">📦 Другое</option>
+                </select>
+                <input type="text" id="jobCity" placeholder="Город выполнения">
+                <button onclick="createJob()">Опубликовать</button>
             </div>
         </div>
     </div>
 
+    <!-- Нижнее меню -->
+    <div class="bottom-nav" id="bottomNav" style="display: none;">
+        <button class="nav-item" data-view="feed">📰 Лента</button>
+        <button class="nav-item" data-view="myJobs">📋 Мои заявки</button>
+        <button class="nav-item" data-view="myResponses">💬 Отклики</button>
+    </div>
+
     <script>
-        // ======================== СМЕНА ТЕМЫ (работает всегда) ========================
+        // ========== ТЕМА ==========
         const themeToggle = document.getElementById('themeToggle');
-        // При загрузке: читаем сохранённую тему из localStorage
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
             document.body.classList.remove('light');
             document.body.classList.add('dark');
             themeToggle.innerHTML = '🌙 Тёмная тема';
         } else {
-            document.body.classList.remove('dark');
-            document.body.classList.add('light');
             themeToggle.innerHTML = '☀️ Светлая тема';
         }
-
-        // Обработчик клика по кнопке
         themeToggle.addEventListener('click', () => {
             if (document.body.classList.contains('light')) {
-                // переключаем на тёмную
                 document.body.classList.remove('light');
                 document.body.classList.add('dark');
                 localStorage.setItem('theme', 'dark');
                 themeToggle.innerHTML = '🌙 Тёмная тема';
             } else {
-                // переключаем на светлую
                 document.body.classList.remove('dark');
                 document.body.classList.add('light');
                 localStorage.setItem('theme', 'light');
                 themeToggle.innerHTML = '☀️ Светлая тема';
             }
         });
-        // ======================== ОСТАЛЬНОЙ КОД (без изменений) ========================
+
         let token = localStorage.getItem('token');
         let user = null;
 
-        function showError(where, msg) {
-            const el = document.getElementById(where);
-            if (el) el.innerText = msg;
-            setTimeout(() => { if(el) el.innerText = ''; }, 3000);
+        // Элементы
+        const authBlock = document.getElementById('authBlock');
+        const mainApp = document.getElementById('mainApp');
+        const bottomNav = document.getElementById('bottomNav');
+        const feedView = document.getElementById('feedView');
+        const myJobsView = document.getElementById('myJobsView');
+        const myResponsesView = document.getElementById('myResponsesView');
+        const createJobForm = document.getElementById('createJobForm');
+
+        // Заполнение выпадающего списка городов (уникальные из заявок)
+        async function loadCityFilter() {
+            const res = await fetch('/api/jobs');
+            const jobs = await res.json();
+            const cities = [...new Set(jobs.map(j => j.city).filter(c => c))];
+            const select = document.getElementById('cityFilter');
+            select.innerHTML = '<option value="all">Все города</option>';
+            cities.forEach(city => {
+                const opt = document.createElement('option');
+                opt.value = city;
+                opt.textContent = city;
+                select.appendChild(opt);
+            });
+            select.onchange = () => loadJobs();
         }
 
+        // Загрузка ленты
+        async function loadJobs() {
+            const cityFilter = document.getElementById('cityFilter').value;
+            let url = '/api/jobs';
+            if (cityFilter && cityFilter !== 'all') url += `?city=${encodeURIComponent(cityFilter)}`;
+            const res = await fetch(url);
+            const jobs = await res.json();
+            const container = document.getElementById('jobsList');
+            container.innerHTML = '';
+            if (jobs.length === 0) { container.innerHTML = '<p>Нет заявок</p>'; return; }
+            for (let job of jobs) {
+                const div = document.createElement('div');
+                div.className = 'job';
+                const categoryNames = { repair: '🔧 Ремонт', cleaning: '🧹 Уборка', delivery: '🚚 Доставка', it: '💻 IT', other: '📦 Другое' };
+                const categoryText = categoryNames[job.category] || job.category;
+                div.innerHTML = `
+                    <strong>${escapeHtml(job.title)}</strong>
+                    <div class="job-meta">
+                        <span>📂 ${categoryText}</span>
+                        <span>📍 ${job.city || 'Не указан'}</span>
+                        <span>📅 ${new Date(job.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p>${escapeHtml(job.description)}</p>
+                    <div class="job-meta">
+                        <span>💰 Статус: ${job.status === 'open' ? '🔓 Открыта' : (job.status === 'taken' ? '🔨 В работе' : '✅ Завершена')}</span>
+                    </div>
+                `;
+                if (user && user.role === 'candidate' && job.status === 'open') {
+                    const respondBtn = document.createElement('button');
+                    respondBtn.innerText = '📞 Откликнуться';
+                    respondBtn.onclick = () => respondToJob(job.id);
+                    div.appendChild(respondBtn);
+                }
+                if (user && (user.role === 'employer' || user.role === 'admin') && job.status === 'open') {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerText = '❌ Удалить';
+                    deleteBtn.classList.add('danger-btn');
+                    deleteBtn.onclick = () => deleteJob(job.id);
+                    div.appendChild(deleteBtn);
+                }
+                container.appendChild(div);
+            }
+        }
+
+        async function respondToJob(jobId) {
+            const res = await fetch('/api/responses', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ jobId })
+            });
+            if (res.ok) {
+                alert('Отклик отправлен!');
+                loadJobs();
+                if (user.role === 'candidate') loadMyResponses();
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Ошибка');
+            }
+        }
+
+        async function deleteJob(jobId) {
+            if (!confirm('Удалить заявку?')) return;
+            const res = await fetch(`/api/jobs/${jobId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) {
+                loadJobs();
+                if (myJobsView.style.display !== 'none') loadMyJobs();
+            } else alert('Ошибка');
+        }
+
+        async function loadMyJobs() {
+            const res = await fetch('/api/my-jobs', { headers: { 'Authorization': `Bearer ${token}` } });
+            const jobs = await res.json();
+            const container = document.getElementById('myJobsList');
+            container.innerHTML = '';
+            if (jobs.length === 0) { container.innerHTML = '<p>Вы ещё не создали заявок</p>'; return; }
+            for (let job of jobs) {
+                const div = document.createElement('div');
+                div.className = 'job';
+                div.innerHTML = `<strong>${escapeHtml(job.title)}</strong><br>${escapeHtml(job.description)}<br><small>${job.city || ''} | ${job.status}</small>`;
+                container.appendChild(div);
+            }
+        }
+
+        async function loadMyResponses() {
+            const res = await fetch('/api/my-responses', { headers: { 'Authorization': `Bearer ${token}` } });
+            const responses = await res.json();
+            const container = document.getElementById('myResponsesList');
+            container.innerHTML = '';
+            if (responses.length === 0) { container.innerHTML = '<p>Вы ещё не откликались</p>'; return; }
+            for (let r of responses) {
+                const div = document.createElement('div');
+                div.className = 'job';
+                div.innerHTML = `<strong>${escapeHtml(r.jobTitle)}</strong><br>${escapeHtml(r.description)}<br><small>📍 ${r.city || ''}</small><br><span>📅 ${new Date(r.createdAt).toLocaleString()}</span>`;
+                container.appendChild(div);
+            }
+        }
+
+        async function createJob() {
+            const title = document.getElementById('jobTitle').value.trim();
+            const description = document.getElementById('jobDesc').value.trim();
+            const category = document.getElementById('jobCategory').value;
+            const city = document.getElementById('jobCity').value.trim();
+            if (!title || !description) { alert('Заполните название и описание'); return; }
+            const res = await fetch('/api/jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ title, description, category, city })
+            });
+            if (res.ok) {
+                alert('Заявка создана');
+                document.getElementById('jobTitle').value = '';
+                document.getElementById('jobDesc').value = '';
+                document.getElementById('jobCity').value = '';
+                loadJobs();
+                if (myJobsView.style.display !== 'none') loadMyJobs();
+                switchView('feed');
+            } else alert('Ошибка');
+        }
+
+        function switchView(view) {
+            feedView.style.display = 'none';
+            myJobsView.style.display = 'none';
+            myResponsesView.style.display = 'none';
+            if (view === 'feed') feedView.style.display = 'block';
+            if (view === 'myJobs') { myJobsView.style.display = 'block'; loadMyJobs(); }
+            if (view === 'myResponses') { myResponsesView.style.display = 'block'; loadMyResponses(); }
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            if (view === 'feed') document.querySelector('[data-view="feed"]').classList.add('active');
+            if (view === 'myJobs') document.querySelector('[data-view="myJobs"]').classList.add('active');
+            if (view === 'myResponses') document.querySelector('[data-view="myResponses"]').classList.add('active');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+        }
+
+        // Регистрация/логин
         async function register() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const role = document.getElementById('role').value;
+            const city = document.getElementById('city').value.trim();
             const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, role })
+                body: JSON.stringify({ email, password, role, city })
             });
-            if (res.ok) {
-                showError('authError', '✅ Регистрация успешна, теперь войдите');
-            } else {
-                const err = await res.json();
-                showError('authError', err.error || 'Ошибка');
-            }
+            if (res.ok) showAuthError('✅ Регистрация успешна, войдите');
+            else { const err = await res.json(); showAuthError(err.error); }
         }
-
         async function login() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
@@ -287,94 +442,60 @@
                 token = data.token;
                 user = data.user;
                 localStorage.setItem('token', token);
-                document.getElementById('auth').style.display = 'none';
-                document.getElementById('userInfo').style.display = 'block';
-                document.getElementById('userEmail').innerText = user.email;
-                let roleText = user.role === 'candidate' ? 'Кандидат' : (user.role === 'employer' ? 'Работодатель' : 'Администратор');
-                document.getElementById('userRole').innerText = roleText;
-                if (user.role === 'employer' || user.role === 'admin') {
-                    document.getElementById('jobForm').style.display = 'block';
+                authBlock.style.display = 'none';
+                mainApp.style.display = 'block';
+                bottomNav.style.display = 'flex';
+                // Показать форму создания заявки для работодателя/админа
+                if (user.role === 'employer' || user.role === 'admin') createJobForm.style.display = 'block';
+                else createJobForm.style.display = 'none';
+                // Настройка нижнего меню
+                if (user.role === 'candidate') {
+                    document.querySelector('[data-view="myJobs"]').style.display = 'none';
+                    document.querySelector('[data-view="myResponses"]').style.display = 'flex';
+                } else {
+                    document.querySelector('[data-view="myJobs"]').style.display = 'flex';
+                    document.querySelector('[data-view="myResponses"]').style.display = 'none';
                 }
+                switchView('feed');
+                loadCityFilter();
                 loadJobs();
                 if (user.role === 'admin') {
-                    const adminDiv = document.createElement('div');
-                    adminDiv.innerHTML = '<hr><a href="/admin" target="_blank" style="color: var(--btn-primary);">🛠️ Перейти в админ-панель</a>';
-                    document.getElementById('userInfo').appendChild(adminDiv);
+                    const adminLink = document.createElement('div');
+                    adminLink.innerHTML = '<hr><a href="/admin" target="_blank" style="color: var(--btn-primary);">🛠️ Админ-панель</a>';
+                    document.querySelector('#feedView .card').appendChild(adminLink);
                 }
-            } else {
-                const err = await res.json();
-                showError('authError', err.error || 'Неверный логин или пароль');
-            }
+            } else { const err = await res.json(); showAuthError(err.error); }
         }
-
+        function showAuthError(msg) {
+            const errDiv = document.getElementById('authError');
+            errDiv.innerText = msg;
+            setTimeout(() => errDiv.innerText = '', 3000);
+        }
         function logout() {
             localStorage.removeItem('token');
             token = null;
             user = null;
-            document.getElementById('auth').style.display = 'block';
-            document.getElementById('userInfo').style.display = 'none';
+            authBlock.style.display = 'block';
+            mainApp.style.display = 'none';
+            bottomNav.style.display = 'none';
         }
 
-        async function loadJobs() {
-            const res = await fetch('/api/jobs');
-            const jobs = await res.json();
-            const container = document.getElementById('jobsList');
-            container.innerHTML = '';
-            if (jobs.length === 0) {
-                container.innerHTML = '<p>Пока нет заявок</p>';
-                return;
-            }
-            for (let job of jobs) {
-                const div = document.createElement('div');
-                div.className = 'job';
-                div.innerHTML = `<strong>${escapeHtml(job.title)}</strong><br>${escapeHtml(job.description)}<br><small>📅 ${new Date(job.createdAt).toLocaleString()}</small>`;
-                container.appendChild(div);
-            }
-        }
-
-        async function createJob() {
-            const title = document.getElementById('jobTitle').value.trim();
-            const description = document.getElementById('jobDesc').value.trim();
-            if (!title || !description) {
-                alert('Заполните оба поля');
-                return;
-            }
-            const res = await fetch('/api/jobs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ title, description })
-            });
-            if (res.ok) {
-                document.getElementById('jobTitle').value = '';
-                document.getElementById('jobDesc').value = '';
-                loadJobs();
-            } else {
-                alert('Ошибка создания заявки');
-            }
-        }
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-
-        // Проверка токена при загрузке
+        // При загрузке проверить токен
         if (token) {
-            fetch('/api/jobs', { headers: { 'Authorization': `Bearer ${token}` } })
-                .then(() => {
-                    document.getElementById('auth').style.display = 'none';
-                    document.getElementById('userInfo').style.display = 'block';
-                    document.getElementById('userEmail').innerText = '...';
-                    document.getElementById('userRole').innerText = '...';
-                    loadJobs();
-                })
-                .catch(() => localStorage.removeItem('token'));
+            fetch('/api/jobs', { headers: { 'Authorization': `Bearer ${token}` } }).then(() => {
+                // Восстановим пользователя из localStorage? Можно сделать запрос /me, но упростим: перенаправим на логин
+                location.reload();
+            }).catch(() => localStorage.removeItem('token'));
         }
+
+        // Глобальные функции для onclick
+        window.register = register;
+        window.login = login;
+        window.logout = logout;
+        window.createJob = createJob;
+        window.respondToJob = respondToJob;
+        window.deleteJob = deleteJob;
+        window.switchView = switchView;
     </script>
 </body>
 </html>
