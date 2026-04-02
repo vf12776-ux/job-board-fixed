@@ -2,58 +2,247 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Доска заявок</title>
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/icon-192.png">
     <style>
-        body { font-family: Arial; margin: 20px; }
-        .error { color: red; }
-        .job { border: 1px solid #ccc; margin: 10px 0; padding: 10px; }
-        button { margin: 5px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* светлая тема (по умолчанию) */
+        :root {
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --border: #e5e7eb;
+            --input-bg: #ffffff;
+            --input-border: #d1d5db;
+            --btn-primary: #3b82f6;
+            --btn-primary-hover: #2563eb;
+            --btn-danger: #ef4444;
+            --btn-danger-hover: #dc2626;
+            --btn-secondary: #9ca3af;
+            --btn-secondary-hover: #6b7280;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+
+        body.dark {
+            --bg-body: #1f2937;
+            --bg-card: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --border: #4b5563;
+            --input-bg: #4b5563;
+            --input-border: #6b7280;
+            --btn-primary: #3b82f6;
+            --btn-primary-hover: #60a5fa;
+            --btn-danger: #f87171;
+            --btn-danger-hover: #ef4444;
+            --btn-secondary: #6b7280;
+            --btn-secondary-hover: #4b5563;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            margin: 8px 0;
+            border: 1px solid var(--input-border);
+            border-radius: 16px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--btn-primary);
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
+        }
+
+        button {
+            background: var(--btn-primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+
+        button:hover {
+            background: var(--btn-primary-hover);
+            transform: scale(0.98);
+        }
+
+        .danger-btn {
+            background: var(--btn-danger);
+        }
+        .danger-btn:hover {
+            background: var(--btn-danger-hover);
+        }
+
+        .secondary-btn {
+            background: var(--btn-secondary);
+        }
+        .secondary-btn:hover {
+            background: var(--btn-secondary-hover);
+        }
+
+        .job {
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: var(--bg-card);
+        }
+
+        .job strong {
+            font-size: 1.2rem;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            z-index: 100;
+        }
+
+        .error {
+            color: #ef4444;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        hr {
+            margin: 16px 0;
+            border-color: var(--border);
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 12px; }
+            .card { padding: 16px; }
+            h1 { font-size: 1.5rem; }
+        }
     </style>
 </head>
 <body>
-    <div id="app">
-        <h1>Доска заявок</h1>
-        <div id="auth">
-            <h2>Вход / Регистрация</h2>
-            <input type="email" id="email" placeholder="Email"><br>
-            <input type="password" id="password" placeholder="Пароль"><br>
-            <select id="role">
-                <option value="candidate">Кандидат</option>
-                <option value="employer">Работодатель</option>
-            </select><br>
-            <button onclick="register()">Регистрация</button>
-            <button onclick="login()">Вход</button>
-            <div id="authError" class="error"></div>
-        </div>
-        <div id="userInfo" style="display:none">
-            <p>Вы вошли как <span id="userRole"></span> (<span id="userEmail"></span>)</p>
-            <button onclick="logout()">Выйти</button>
-            <hr>
-            <div id="jobForm" style="display:none">
-                <h3>Новая заявка</h3>
-                <input type="text" id="jobTitle" placeholder="Название"><br>
-                <textarea id="jobDesc" placeholder="Описание"></textarea><br>
-                <button onclick="createJob()">Создать</button>
+    <div class="theme-toggle" id="themeToggle">🌙</div>
+    <div class="container">
+        <div class="card" id="app">
+            <h1>📋 Доска заявок</h1>
+            <div id="auth">
+                <h2>Вход / Регистрация</h2>
+                <input type="email" id="email" placeholder="Email" autocomplete="email">
+                <input type="password" id="password" placeholder="Пароль" autocomplete="current-password">
+                <select id="role">
+                    <option value="candidate">👤 Кандидат</option>
+                    <option value="employer">🏢 Работодатель</option>
+                </select>
+                <div>
+                    <button onclick="register()">Регистрация</button>
+                    <button onclick="login()" class="btn-primary">Вход</button>
+                </div>
+                <div id="authError" class="error"></div>
             </div>
-            <h2>Заявки</h2>
-            <div id="jobsList"></div>
+            <div id="userInfo" style="display:none">
+                <p>✅ Вы вошли как <strong><span id="userRole"></span></strong> (<span id="userEmail"></span>)</p>
+                <button onclick="logout()" class="secondary-btn">Выйти</button>
+                <hr>
+                <div id="jobForm" style="display:none">
+                    <h3>➕ Новая заявка</h3>
+                    <input type="text" id="jobTitle" placeholder="Название вакансии">
+                    <textarea id="jobDesc" rows="3" placeholder="Описание..."></textarea>
+                    <button onclick="createJob()">Создать</button>
+                </div>
+                <h2>📌 Все заявки</h2>
+                <div id="jobsList"></div>
+            </div>
         </div>
     </div>
 
     <script>
+        // Тема
+        const themeToggle = document.getElementById('themeToggle');
+        const root = document.documentElement;
+        if (localStorage.getItem('theme') === 'dark') {
+            root.classList.add('dark');
+            themeToggle.innerText = '☀️';
+        } else {
+            themeToggle.innerText = '🌙';
+        }
+        themeToggle.onclick = () => {
+            if (root.classList.contains('dark')) {
+                root.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                themeToggle.innerText = '🌙';
+            } else {
+                root.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeToggle.innerText = '☀️';
+            }
+        };
+
         let token = localStorage.getItem('token');
         let user = null;
 
         function showError(where, msg) {
-            document.getElementById(where).innerText = msg;
-            setTimeout(() => document.getElementById(where).innerText = '', 3000);
+            const el = document.getElementById(where);
+            if (el) el.innerText = msg;
+            setTimeout(() => { if(el) el.innerText = ''; }, 3000);
         }
 
         async function register() {
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const role = document.getElementById('role').value;
             const res = await fetch('/api/register', {
@@ -62,15 +251,15 @@
                 body: JSON.stringify({ email, password, role })
             });
             if (res.ok) {
-                showError('authError', 'Регистрация успешна, войдите');
+                showError('authError', '✅ Регистрация успешна, теперь войдите');
             } else {
                 const err = await res.json();
-                showError('authError', err.error);
+                showError('authError', err.error || 'Ошибка');
             }
         }
 
         async function login() {
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const res = await fetch('/api/login', {
                 method: 'POST',
@@ -85,19 +274,19 @@
                 document.getElementById('auth').style.display = 'none';
                 document.getElementById('userInfo').style.display = 'block';
                 document.getElementById('userEmail').innerText = user.email;
-                document.getElementById('userRole').innerText = user.role;
+                document.getElementById('userRole').innerText = user.role === 'candidate' ? 'Кандидат' : (user.role === 'employer' ? 'Работодатель' : 'Администратор');
                 if (user.role === 'employer' || user.role === 'admin') {
                     document.getElementById('jobForm').style.display = 'block';
                 }
                 loadJobs();
                 if (user.role === 'admin') {
-                    const adminLink = document.createElement('div');
-                    adminLink.innerHTML = '<hr><a href="/admin" target="_blank">Перейти в админ-панель</a>';
-                    document.getElementById('userInfo').appendChild(adminLink);
+                    const adminDiv = document.createElement('div');
+                    adminDiv.innerHTML = '<hr><a href="/admin" target="_blank" style="color: var(--btn-primary);">🛠️ Перейти в админ-панель</a>';
+                    document.getElementById('userInfo').appendChild(adminDiv);
                 }
             } else {
                 const err = await res.json();
-                showError('authError', err.error);
+                showError('authError', err.error || 'Неверный логин или пароль');
             }
         }
 
@@ -114,17 +303,25 @@
             const jobs = await res.json();
             const container = document.getElementById('jobsList');
             container.innerHTML = '';
+            if (jobs.length === 0) {
+                container.innerHTML = '<p>Пока нет заявок</p>';
+                return;
+            }
             for (let job of jobs) {
                 const div = document.createElement('div');
                 div.className = 'job';
-                div.innerHTML = `<strong>${job.title}</strong><br>${job.description}<br><small>${job.createdAt}</small>`;
+                div.innerHTML = `<strong>${escapeHtml(job.title)}</strong><br>${escapeHtml(job.description)}<br><small>📅 ${new Date(job.createdAt).toLocaleString()}</small>`;
                 container.appendChild(div);
             }
         }
 
         async function createJob() {
-            const title = document.getElementById('jobTitle').value;
-            const description = document.getElementById('jobDesc').value;
+            const title = document.getElementById('jobTitle').value.trim();
+            const description = document.getElementById('jobDesc').value.trim();
+            if (!title || !description) {
+                alert('Заполните оба поля');
+                return;
+            }
             const res = await fetch('/api/jobs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -135,24 +332,33 @@
                 document.getElementById('jobDesc').value = '';
                 loadJobs();
             } else {
-                alert('Ошибка создания');
+                alert('Ошибка создания заявки');
             }
         }
 
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+                return c;
+            });
+        }
+
         if (token) {
-            fetch('/api/jobs', { headers: { 'Authorization': `Bearer ${token}` } }).then(() => {
-                document.getElementById('auth').style.display = 'none';
-                document.getElementById('userInfo').style.display = 'block';
-                document.getElementById('userEmail').innerText = '?';
-                document.getElementById('userRole').innerText = '?';
-                loadJobs();
-            }).catch(() => localStorage.removeItem('token'));
+            fetch('/api/jobs', { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(() => {
+                    document.getElementById('auth').style.display = 'none';
+                    document.getElementById('userInfo').style.display = 'block';
+                    document.getElementById('userEmail').innerText = '...';
+                    document.getElementById('userRole').innerText = '...';
+                    loadJobs();
+                })
+                .catch(() => localStorage.removeItem('token'));
         }
     </script>
-    <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-  }
-</script>
 </body>
 </html>

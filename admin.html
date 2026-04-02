@@ -2,37 +2,172 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Админ-панель</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель - Доска заявок</title>
+    <link rel="icon" type="image/png" href="/icon-192.png">
     <style>
-        body { font-family: Arial; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background 0.2s, color 0.2s;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            padding: 20px;
+        }
+        :root {
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --border: #e5e7eb;
+            --table-header: #f9fafb;
+            --btn-primary: #3b82f6;
+            --btn-primary-hover: #2563eb;
+            --btn-danger: #ef4444;
+            --btn-danger-hover: #dc2626;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+        body.dark {
+            --bg-body: #1f2937;
+            --bg-card: #374151;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --border: #4b5563;
+            --table-header: #4b5563;
+            --btn-primary: #3b82f6;
+            --btn-primary-hover: #60a5fa;
+            --btn-danger: #f87171;
+            --btn-danger-hover: #ef4444;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        h1, h2 {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: var(--table-header);
+            font-weight: 600;
+        }
+        select, button {
+            padding: 6px 12px;
+            border-radius: 40px;
+            border: none;
+            background: var(--btn-primary);
+            color: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        select {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        .delete-btn {
+            background: var(--btn-danger);
+        }
+        .delete-btn:hover {
+            background: var(--btn-danger-hover);
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            z-index: 100;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--btn-primary);
+            text-decoration: none;
+        }
+        @media (max-width: 768px) {
+            th, td { padding: 8px; font-size: 0.8rem; }
+            .card { padding: 16px; }
+        }
     </style>
 </head>
 <body>
-    <h1>Админ-панель</h1>
-    <div id="adminContent">
-        <h2>Пользователи</h2>
-        <table id="usersTable">
-            <thead><tr><th>ID</th><th>Email</th><th>Роль</th><th></th></tr></thead>
-            <tbody></tbody>
-        </table>
-        <h2>Заявки</h2>
-        <table id="jobsTable">
-            <thead><tr><th>ID</th><th>Название</th><th>Описание</th><th>Удалить</th></tr></thead>
-            <tbody></tbody>
-        </table>
+    <div class="theme-toggle" id="themeToggle">🌙</div>
+    <div class="container">
+        <div class="card">
+            <a href="/" class="back-link">← На главную</a>
+            <h1>🛡️ Админ-панель</h1>
+            <div id="adminContent">
+                <h2>👥 Пользователи</h2>
+                <table id="usersTable">
+                    <thead><tr><th>ID</th><th>Email</th><th>Роль</th><th>Действие</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+                <h2 style="margin-top: 32px;">📋 Заявки</h2>
+                <table id="jobsTable">
+                    <thead><tr><th>ID</th><th>Название</th><th>Описание</th><th>Удалить</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
     <script>
+        // Тема
+        const themeToggle = document.getElementById('themeToggle');
+        const root = document.documentElement;
+        if (localStorage.getItem('theme') === 'dark') {
+            root.classList.add('dark');
+            themeToggle.innerText = '☀️';
+        } else {
+            themeToggle.innerText = '🌙';
+        }
+        themeToggle.onclick = () => {
+            if (root.classList.contains('dark')) {
+                root.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                themeToggle.innerText = '🌙';
+            } else {
+                root.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeToggle.innerText = '☀️';
+            }
+        };
+
         const token = localStorage.getItem('token');
         if (!token) {
-            alert('Нет токена, войдите сначала на главной странице');
+            alert('Нет доступа, войдите как администратор на главной странице');
             location.href = '/';
         }
 
         async function loadUsers() {
             const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
-            if (!res.ok) return alert('Нет прав админа');
+            if (!res.ok) return alert('Ошибка загрузки пользователей');
             const users = await res.json();
             const tbody = document.querySelector('#usersTable tbody');
             tbody.innerHTML = '';
@@ -45,13 +180,15 @@
                 ['candidate', 'employer', 'admin'].forEach(r => {
                     const opt = document.createElement('option');
                     opt.value = r;
-                    opt.innerText = r;
+                    opt.innerText = r === 'candidate' ? 'Кандидат' : (r === 'employer' ? 'Работодатель' : 'Админ');
                     if (u.role === r) opt.selected = true;
                     select.appendChild(opt);
                 });
                 select.onchange = () => updateRole(u.id, select.value);
                 roleCell.appendChild(select);
-                row.insertCell(3).innerHTML = '';
+                const actionCell = row.insertCell(3);
+                // можно добавить кнопку удаления пользователя, но не будем усложнять
+                actionCell.innerHTML = '';
             }
         }
 
@@ -78,6 +215,7 @@
                 const delCell = row.insertCell(3);
                 const delBtn = document.createElement('button');
                 delBtn.innerText = 'Удалить';
+                delBtn.classList.add('delete-btn');
                 delBtn.onclick = () => deleteJob(j.id);
                 delCell.appendChild(delBtn);
             }
