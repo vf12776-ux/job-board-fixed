@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Доска заявок</title>
+    <link rel="manifest" href="/manifest.json">
     <style>
         body { font-family: Arial; margin: 20px; }
         .error { color: red; }
@@ -147,5 +148,10 @@
             }).catch(() => localStorage.removeItem('token'));
         }
     </script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+  }
+</script>
 </body>
 </html>
