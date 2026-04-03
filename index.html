@@ -400,6 +400,7 @@ if (job.status === 'taken' && user && (user.id === job.employerId || user.id ===
         }
 
         async function respondToJob(jobId) {
+            if (await checkIfBanned()) return;
     try {
         const res = await fetch('/api/responses', {
             method: 'POST',
@@ -530,6 +531,7 @@ if (job.status === 'taken' && user && (user.id === job.employerId || user.id ===
 }
 
         async function createJob() {
+            if (await checkIfBanned()) return;
             const title = document.getElementById('jobTitle').value.trim();
             const description = document.getElementById('jobDesc').value.trim();
             const category = document.getElementById('jobCategory').value;
@@ -586,6 +588,7 @@ if (job.status === 'taken' && user && (user.id === job.employerId || user.id ===
         
         // Логин
         async function login() {
+            if (await checkIfBanned()) return;
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const res = await fetch('/api/login', {
@@ -704,6 +707,27 @@ window.onclick = function(event) {
   if (event.target === modal) closeChat();
 };
 document.getElementById('sendMessageBtn').onclick = sendChatMessage;
+// Проверка, не забанен ли пользователь
+async function checkIfBanned() {
+    if (!user) return false;
+    try {
+        const res = await fetch('/api/blacklist', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) {
+            const blacklist = await res.json();
+            const isBanned = blacklist.some(b => b.userId === user.id);
+            if (isBanned) {
+                showNotification('⚠️ Вы забанены администратором. Вы не можете создавать заявки или откликаться.', 'error');
+                // Скрыть формы и кнопки
+                const createForm = document.getElementById('createJobForm');
+                if (createForm) createForm.style.display = 'none';
+                return true;
+            }
+        }
+        return false;
+    } catch (err) {
+        return false;
+    }
+}
 
         window.register = register;
         window.login = login;
