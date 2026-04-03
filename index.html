@@ -674,14 +674,28 @@ async function simulatePayment(jobId) {
         }
 
         // Восстановление сессии
-        if (token) {
-            fetch('/api/jobs', { headers: { 'Authorization': `Bearer ${token}` } })
-                .then(() => {
-                    // Попробуем получить информацию о пользователе через /api/me? Упростим: перенаправим на логин
-                    location.reload();
-                })
-                .catch(() => localStorage.removeItem('token'));
-        }
+if (token) {
+    fetch('/api/me', { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(res => res.ok ? res.json() : Promise.reject())
+        .then(userData => {
+            user = userData;
+            authBlock.style.display = 'none';
+            mainApp.style.display = 'block';
+            bottomNav.style.display = 'flex';
+            updateUIForRole();
+            loadCityFilter();
+            loadJobs();
+            switchView('feed');
+        })
+        .catch(() => {
+            localStorage.removeItem('token');
+            location.reload();
+        });
+} else {
+    authBlock.style.display = 'block';
+    mainApp.style.display = 'none';
+    bottomNav.style.display = 'none';
+}
         // Глобальные переменные для чата
 
 let currentChatJobId = null;

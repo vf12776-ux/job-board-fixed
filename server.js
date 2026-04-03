@@ -14,8 +14,8 @@ app.use(express.json());
 
 const db = new sqlite3.Database('./database.db');
 
+// Создание таблиц
 db.serialize(() => {
-  // Пользователи (с городом)
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE,
@@ -24,7 +24,6 @@ db.serialize(() => {
     city TEXT DEFAULT ''
   )`);
 
-  // Заявки (с категорией, городом, статусом, assignedTo)
   db.run(`CREATE TABLE IF NOT EXISTS jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT,
@@ -34,10 +33,11 @@ db.serialize(() => {
     employerId INTEGER,
     createdAt TEXT,
     status TEXT DEFAULT 'open',
-    assignedTo INTEGER
+    assignedTo INTEGER,
+    price INTEGER DEFAULT 0,
+    paymentStatus TEXT DEFAULT 'pending'
   )`);
 
-  // Отклики
   db.run(`CREATE TABLE IF NOT EXISTS responses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     jobId INTEGER,
@@ -46,7 +46,6 @@ db.serialize(() => {
     status TEXT DEFAULT 'pending'
   )`);
 
-  // Сообщения чата
   db.run(`CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     jobId INTEGER,
@@ -56,7 +55,6 @@ db.serialize(() => {
     isRead INTEGER DEFAULT 0
   )`);
 
-  // Чёрный список
   db.run(`CREATE TABLE IF NOT EXISTS blacklist (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     userId INTEGER UNIQUE,
@@ -64,18 +62,18 @@ db.serialize(() => {
     bannedAt TEXT
   )`);
 
-  // Добавляем колонку assignedTo в jobs, если её нет (миграция)
+  // Добавляем колонки для старых БД (миграция)
   db.run("ALTER TABLE jobs ADD COLUMN assignedTo INTEGER", (err) => {
     if (err && !err.message.includes('duplicate column name')) console.log(err);
   });
   db.run("ALTER TABLE jobs ADD COLUMN price INTEGER DEFAULT 0", (err) => {
-  if (err && !err.message.includes('duplicate column name')) console.log(err);
-});
-db.run("ALTER TABLE jobs ADD COLUMN paymentStatus TEXT DEFAULT 'pending'", (err) => {
-  if (err && !err.message.includes('duplicate column name')) console.log(err);
-});
+    if (err && !err.message.includes('duplicate column name')) console.log(err);
+  });
+  db.run("ALTER TABLE jobs ADD COLUMN paymentStatus TEXT DEFAULT 'pending'", (err) => {
+    if (err && !err.message.includes('duplicate column name')) console.log(err);
+  });
 
-  // Создаём админа
+  // Создание админа
   const adminEmail = 'admin@example.com';
   const adminPass = 'admin123';
   db.get('SELECT * FROM users WHERE email = ?', [adminEmail], (err, row) => {
@@ -87,7 +85,7 @@ db.run("ALTER TABLE jobs ADD COLUMN paymentStatus TEXT DEFAULT 'pending'", (err)
   });
 });
 
-// Middleware
+// Middleware для проверки JWT
 const auth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token' });
@@ -100,6 +98,7 @@ const auth = (req, res, next) => {
   }
 };
 
+// Проверка бана (для действий, требующих блокировки)
 const checkBanned = (req, res, next) => {
   if (!req.user) return next();
   db.get('SELECT * FROM blacklist WHERE userId = ?', [req.user.id], (err, banned) => {
@@ -108,7 +107,7 @@ const checkBanned = (req, res, next) => {
   });
 };
 
-// === API ПОЛЬЗОВАТЕЛЕЙ ===
+// ========== API ПОЛЬЗОВАТЕЛЕЙ ==========
 app.post('/api/register', (req, res) => {
   const { email, password, role, city } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
@@ -147,7 +146,7 @@ app.put('/api/users/:id/role', auth, (req, res) => {
   });
 });
 
-// === API ЗАЯВОК ===
+// ========== API ЗАЯВОК ==========
 app.post('/api/jobs', auth, checkBanned, (req, res) => {
   if (req.user.role !== 'employer' && req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Forbidden' });
@@ -195,7 +194,7 @@ app.delete('/api/jobs/:id', auth, (req, res) => {
   });
 });
 
-// === API ОТКЛИКОВ (с автоназначением первого) ===
+// ========== API ОТКЛИКОВ ==========
 app.post('/api/responses', auth, checkBanned, (req, res) => {
   if (req.user.role !== 'candidate') return res.status(403).json({ error: 'Only candidates can respond' });
   const { jobId } = req.body;
@@ -255,7 +254,7 @@ app.get('/api/my-responses', auth, (req, res) => {
   });
 });
 
-// === API ЧАТА ===
+// ========== API ЧАТА ==========
 app.get('/api/messages/:jobId', auth, (req, res) => {
   const jobId = req.params.jobId;
   db.get('SELECT employerId, assignedTo FROM jobs WHERE id = ?', [jobId], (err, job) => {
@@ -287,7 +286,7 @@ app.post('/api/messages', auth, (req, res) => {
   });
 });
 
-// === API ЧЁРНОГО СПИСКА (только админ) ===
+// ========== API ЧЁРНОГО СПИСКА ==========
 app.get('/api/blacklist', auth, (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   db.all(`
@@ -316,7 +315,8 @@ app.delete('/api/blacklist/:userId', auth, (req, res) => {
     res.json({ success: true });
   });
 });
-// Симуляция оплаты (только для заказчика)
+
+// ========== СИМУЛЯЦИЯ ОПЛАТЫ ==========
 app.post('/api/pay/:jobId', auth, (req, res) => {
   const jobId = req.params.jobId;
   db.get('SELECT employerId, paymentStatus, price FROM jobs WHERE id = ?', [jobId], (err, job) => {
@@ -325,7 +325,6 @@ app.post('/api/pay/:jobId', auth, (req, res) => {
     if (job.paymentStatus !== 'pending') return res.status(400).json({ error: 'Already paid' });
     if (job.price <= 0) return res.status(400).json({ error: 'Invalid price' });
     
-    // Симуляция успешного платежа
     db.run('UPDATE jobs SET paymentStatus = ? WHERE id = ?', ['paid', jobId], (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, message: 'Оплата прошла успешно (симуляция)', jobId });
@@ -333,7 +332,23 @@ app.post('/api/pay/:jobId', auth, (req, res) => {
   });
 });
 
-// === СТАТИКА ===
+// ========== ПОЛУЧЕНИЕ ТЕКУЩЕГО ПОЛЬЗОВАТЕЛЯ (ДЛЯ ВОССТАНОВЛЕНИЯ СЕССИИ) ==========
+app.get('/api/me', auth, (req, res) => {
+  db.get('SELECT id, email, role, city FROM users WHERE id = ?', [req.user.id], (err, user) => {
+    if (err || !user) return res.status(404).json({ error: 'User not found' });
+    db.get('SELECT * FROM blacklist WHERE userId = ?', [user.id], (err, banned) => {
+      res.json({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        city: user.city,
+        banned: !!banned
+      });
+    });
+  });
+});
+
+// ========== СТАТИЧЕСКИЕ ФАЙЛЫ ==========
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -342,6 +357,7 @@ app.get('/admin', (req, res) => {
 });
 app.use(express.static(__dirname));
 
+// ========== ЗАПУСК СЕРВЕРА ==========
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
