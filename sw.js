@@ -1,4 +1,4 @@
-const CACHE_NAME = 'job-board-v2';  // ← версию увеличил, чтобы старый кэш сломался
+const CACHE_NAME = 'job-board-v3';  // увеличили версию, чтобы старый кэш сломался
 const urlsToCache = [
   '/',
   '/index.html',
@@ -12,7 +12,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
-  self.skipWaiting(); // заставляет новый SW вступить в силу сразу
+  self.skipWaiting(); // сразу активируем новый SW
 });
 
 self.addEventListener('activate', event => {
@@ -23,10 +23,18 @@ self.addEventListener('activate', event => {
       })
     ))
   );
-  self.clients.claim(); // сразу перехватывает все запросы
+  self.clients.claim(); // перехватываем все запросы сразу
 });
 
 self.addEventListener('fetch', event => {
+  // Для запросов к HTML и корню сначала пробуем сеть, потом кэш
+  if (event.request.mode === 'navigate' || event.request.url === self.location.origin + '/') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+  // Для остальных ресурсов: сначала кэш, потом сеть
   event.respondWith(
     caches.match(event.request).then(response => {
       return response || fetch(event.request);
