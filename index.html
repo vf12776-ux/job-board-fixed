@@ -855,13 +855,13 @@ document.addEventListener('keydown', function(event) {
     </script>
     <div id="chatModal" class="modal">
   <div class="modal-content">
-    <span class="close" id="closeChat">&times;</span>
+    <span class="close" onclick="closeChat()">&times;</span>
     <h3>💬 Чат по заявке</h3>
     <div id="chatMessages"></div>
     <input type="text" id="chatInput" placeholder="Введите сообщение...">
     <div style="display: flex; gap: 8px; margin-top: 8px;">
       <button id="sendMessageBtn" style="flex: 2;">📤 Отправить</button>
-      <button id="closeChatBtn" style="flex: 1; background: #6b7280;">✖ Закрыть</button>
+      <button onclick="closeChat()" style="flex: 1; background: #6b7280;">✖ Закрыть</button>
     </div>
   </div>
 </div>
