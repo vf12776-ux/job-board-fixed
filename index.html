@@ -400,20 +400,28 @@ if (job.status === 'taken' && user && (user.id === job.employerId || user.id ===
         }
 
         async function respondToJob(jobId) {
-            const res = await fetch('/api/responses', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ jobId })
-            });
-            if (res.ok) {
-                alert('Отклик отправлен!');
-                loadJobs();
-                if (user.role === 'candidate') loadMyResponses();
+    try {
+        const res = await fetch('/api/responses', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ jobId })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            if (data.autoAssigned) {
+                showNotification('✅ Вы первый откликнулись! Заявка ваша, чат открыт.', 'success');
             } else {
-                const err = await res.json();
-                alert(err.error || 'Ошибка');
+                showNotification('✅ Отклик отправлен, но заявка уже взята в работу.', 'info');
             }
+            loadJobs();
+            if (user.role === 'candidate') loadMyResponses();
+        } else {
+            showNotification(data.error || 'Ошибка при отклике', 'error');
         }
+    } catch (err) {
+        showNotification('Ошибка сети: ' + err.message, 'error');
+    }
+}
         async function assignJob(jobId, candidateId) {
     const res = await fetch(`/api/jobs/${jobId}/assign`, {
         method: 'PUT',

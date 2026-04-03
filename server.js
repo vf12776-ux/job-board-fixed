@@ -198,14 +198,32 @@ app.delete('/api/jobs/:id', auth, (req, res) => {
 app.post('/api/responses', auth, (req, res) => {
   if (req.user.role !== 'candidate') return res.status(403).json({ error: 'Only candidates can respond' });
   const { jobId } = req.body;
-  // Проверяем, не откликался ли уже
-  db.get('SELECT * FROM responses WHERE jobId = ? AND candidateId = ?', [jobId, req.user.id], (err, existing) => {
-    if (existing) return res.status(400).json({ error: 'Already responded' });
-    db.run('INSERT INTO responses (jobId, candidateId, createdAt, status) VALUES (?, ?, ?, ?)',
-      [jobId, req.user.id, new Date().toISOString(), 'pending'], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ id: this.lastID, jobId, candidateId: req.user.id });
+  
+  db.get('SELECT status, employerId FROM jobs WHERE id = ?', [jobId], (err, job) => {
+    if (err || !job) return res.status(404).json({ error: 'Job not found' });
+    if (job.status !== 'open') return res.status(400).json({ error: 'Job is already taken or completed' });
+    
+    db.get('SELECT * FROM responses WHERE jobId = ? AND candidateId = ?', [jobId, req.user.id], (err, existing) => {
+      if (existing) return res.status(400).json({ error: 'Already responded' });
+      
+      db.get('SELECT COUNT(*) as count FROM responses WHERE jobId = ?', [jobId], (err, countResult) => {
+        const isFirst = (countResult.count === 0);
+        
+        db.run('INSERT INTO responses (jobId, candidateId, createdAt, status) VALUES (?, ?, ?, ?)',
+          [jobId, req.user.id, new Date().toISOString(), 'pending'], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            
+            if (isFirst) {
+              db.run('UPDATE jobs SET status = ?, assignedTo = ? WHERE id = ?', ['taken', req.user.id, jobId], (err) => {
+                if (err) console.error(err);
+                res.json({ id: this.lastID, jobId, candidateId: req.user.id, autoAssigned: true });
+              });
+            } else {
+              res.json({ id: this.lastID, jobId, candidateId: req.user.id, autoAssigned: false });
+            }
+          });
       });
+    });
   });
 });
 // Назначить исполнителя (закрыть заявку для других откликов)
