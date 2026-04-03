@@ -680,59 +680,84 @@ async function simulatePayment(jobId) {
                 .catch(() => localStorage.removeItem('token'));
         }
         // Глобальные переменные для чата
+
 let currentChatJobId = null;
 
 async function openChat(jobId) {
-  currentChatJobId = jobId;
-  const modal = document.getElementById('chatModal');
-  modal.style.display = 'block';
-  await loadChatMessages();
+    currentChatJobId = jobId;
+    const modal = document.getElementById('chatModal');
+    modal.style.display = 'block';
+    await loadChatMessages();
+    // Обработчик кнопки отправки (на случай, если он не привязан)
+    const sendBtn = document.getElementById('sendMessageBtn');
+    if (sendBtn) {
+        // Убираем старый обработчик, чтобы не дублировать
+        sendBtn.replaceWith(sendBtn.cloneNode(true));
+        const newBtn = document.getElementById('sendMessageBtn');
+        newBtn.onclick = () => sendChatMessage();
+    }
+    // Обработчик ввода по Enter
+    const input = document.getElementById('chatInput');
+    if (input) {
+        input.onkeypress = (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        };
+    }
 }
 
 function closeChat() {
-  document.getElementById('chatModal').style.display = 'none';
-  currentChatJobId = null;
+    document.getElementById('chatModal').style.display = 'none';
+    currentChatJobId = null;
 }
 
 async function loadChatMessages() {
-  if (!currentChatJobId) return;
-  const res = await fetch(`/api/messages/${currentChatJobId}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  if (res.ok) {
-    const messages = await res.json();
-    const container = document.getElementById('chatMessages');
-    container.innerHTML = '';
-    for (let msg of messages) {
-      const div = document.createElement('div');
-      div.className = 'message';
-      const senderName = (msg.senderId === user.id) ? 'Вы' : (msg.senderId === user.id ? 'Вы' : (user.role === 'candidate' ? 'Работодатель' : 'Исполнитель'));
-      // Упрощённо: если отправитель не текущий пользователь, показываем "Собеседник"
-      const displayName = (msg.senderId === user.id) ? 'Вы' : 'Собеседник';
-      div.innerHTML = `<strong>${displayName}:</strong> ${escapeHtml(msg.message)}<br><small>${new Date(msg.createdAt).toLocaleString()}</small>`;
-      container.appendChild(div);
+    if (!currentChatJobId) return;
+    try {
+        const res = await fetch(`/api/messages/${currentChatJobId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Ошибка загрузки');
+        const messages = await res.json();
+        const container = document.getElementById('chatMessages');
+        container.innerHTML = '';
+        for (let msg of messages) {
+            const div = document.createElement('div');
+            div.className = 'message';
+            const senderName = (msg.senderId === user.id) ? 'Вы' : (msg.senderId === user.id ? 'Вы' : 'Собеседник');
+            div.innerHTML = `<strong>${senderName}:</strong> ${escapeHtml(msg.message)}<br><small>${new Date(msg.createdAt).toLocaleString()}</small>`;
+            container.appendChild(div);
+        }
+        container.scrollTop = container.scrollHeight;
+    } catch (err) {
+        console.error(err);
+        showNotification('Не удалось загрузить сообщения', 'error');
     }
-    container.scrollTop = container.scrollHeight;
-  }
 }
 
 async function sendChatMessage() {
-  const input = document.getElementById('chatInput');
-  const message = input.value.trim();
-  if (!message || !currentChatJobId) return;
-  const res = await fetch('/api/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-    body: JSON.stringify({ jobId: currentChatJobId, message })
-  });
-  if (res.ok) {
-    input.value = '';
-    await loadChatMessages();
-  } else {
-    alert('Ошибка отправки');
-  }
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message || !currentChatJobId) {
+        showNotification('Введите сообщение', 'error');
+        return;
+    }
+    try {
+        const res = await fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ jobId: currentChatJobId, message })
+        });
+        if (res.ok) {
+            input.value = '';
+            await loadChatMessages();
+        } else {
+            const errData = await res.json();
+            showNotification(errData.error || 'Ошибка отправки', 'error');
+        }
+    } catch (err) {
+        showNotification('Ошибка сети', 'error');
+    }
 }
-
 // Закрытие модального окна
 document.getElementById('closeChat').onclick = closeChat;
 window.onclick = function(event) {
