@@ -897,20 +897,24 @@ document.addEventListener('keydown', function(event) {
   });
 </script>
 <script>
-  // Автоматическое обновление Service Worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then(registration => {
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // Новый SW установлен, перезагружаем страницу
-            window.location.reload();
-          }
+  // Автоматическое обновление PWA без переустановки
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+        reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // Показываем кнопку или confirm
+                    const updateConfirm = confirm('✅ Доступна новая версия приложения.\nОбновить сейчас?');
+                    if (updateConfirm) {
+                        newWorker.postMessage({ action: 'skipWaiting' });
+                        window.location.reload();
+                    }
+                }
+            });
         });
-      });
     });
-  }
+}
 </script>
 </body>
 </html>
