@@ -1,4 +1,4 @@
-const CACHE_NAME = 'job-board-v3';  // увеличили версию, чтобы старый кэш сломался
+const CACHE_NAME = 'job-board-v4';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -8,13 +8,15 @@ const urlsToCache = [
   '/icon-512.png'
 ];
 
+// При установке кэшируем только статику
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
-  self.skipWaiting(); // сразу активируем новый SW
+  self.skipWaiting(); // активируем сразу
 });
 
+// При активации удаляем старый кэш
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
@@ -23,14 +25,25 @@ self.addEventListener('activate', event => {
       })
     ))
   );
-  self.clients.claim(); // перехватываем все запросы сразу
+  self.clients.claim(); // захватываем все клиенты
 });
 
+// Перехват запросов
 self.addEventListener('fetch', event => {
-  // Для запросов к HTML и корню сначала пробуем сеть, потом кэш
-  if (event.request.mode === 'navigate' || event.request.url === self.location.origin + '/') {
+  const url = new URL(event.request.url);
+  // Для HTML и корневого запроса всегда сначала сеть, потом кэш (fallback)
+  if (event.request.mode === 'navigate' || url.pathname === '/') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request)
+        .then(response => {
+          // Клонируем и кэшируем новую версию
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseClone);
+          });
+          return response;
+        })
+        .catch(() => caches.match(event.request))
     );
     return;
   }

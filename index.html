@@ -854,5 +854,21 @@ function showNotification(msg, type) {
     document.getElementById('installButton').style.display = 'none';
   });
 </script>
+<script>
+  // Автоматическое обновление Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(registration => {
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Новый SW установлен, перезагружаем страницу
+            window.location.reload();
+          }
+        });
+      });
+    });
+  }
+</script>
 </body>
 </html>
