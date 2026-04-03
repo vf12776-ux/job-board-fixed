@@ -3,172 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ-панель - Доска заявок</title>
+    <title>Админ-панель</title>
     <link rel="icon" type="image/png" href="/icon-192.png">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            transition: background 0.2s, color 0.2s;
-        }
-        body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-body);
-            color: var(--text-primary);
-            padding: 20px;
-        }
-        :root {
-            --bg-body: #f3f4f6;
-            --bg-card: #ffffff;
-            --text-primary: #111827;
-            --text-secondary: #4b5563;
-            --border: #e5e7eb;
-            --table-header: #f9fafb;
-            --btn-primary: #3b82f6;
-            --btn-primary-hover: #2563eb;
-            --btn-danger: #ef4444;
-            --btn-danger-hover: #dc2626;
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-        }
-        body.dark {
-            --bg-body: #1f2937;
-            --bg-card: #374151;
-            --text-primary: #f9fafb;
-            --text-secondary: #d1d5db;
-            --border: #4b5563;
-            --table-header: #4b5563;
-            --btn-primary: #3b82f6;
-            --btn-primary-hover: #60a5fa;
-            --btn-danger: #f87171;
-            --btn-danger-hover: #ef4444;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .card {
-            background: var(--bg-card);
-            border-radius: 24px;
-            padding: 24px;
-            margin-bottom: 24px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-        }
-        h1, h2 {
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            border-radius: 16px;
-            overflow: hidden;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-        th {
-            background: var(--table-header);
-            font-weight: 600;
-        }
-        select, button {
-            padding: 6px 12px;
-            border-radius: 40px;
-            border: none;
-            background: var(--btn-primary);
-            color: white;
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
-        select {
-            background: var(--input-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-        .delete-btn {
-            background: var(--btn-danger);
-        }
-        .delete-btn:hover {
-            background: var(--btn-danger-hover);
-        }
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 40px;
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            z-index: 100;
-        }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: var(--btn-primary);
-            text-decoration: none;
-        }
-        @media (max-width: 768px) {
-            th, td { padding: 8px; font-size: 0.8rem; }
-            .card { padding: 16px; }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: 0.2s; }
+        body { font-family: system-ui; background: var(--bg-body); color: var(--text-primary); padding: 20px; }
+        :root { --bg-body: #f3f4f6; --bg-card: #fff; --text-primary: #111; --border: #e5e7eb; --btn-primary: #3b82f6; --btn-danger: #ef4444; }
+        body.dark { --bg-body: #1f2937; --bg-card: #374151; --text-primary: #f9fafb; --border: #4b5563; }
+        .card { background: var(--bg-card); border-radius: 24px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
+        .theme-toggle { position: fixed; top: 20px; right: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 40px; padding: 8px 12px; cursor: pointer; }
+        button { background: var(--btn-primary); color: white; border: none; padding: 6px 12px; border-radius: 40px; cursor: pointer; margin: 2px; }
+        .ban-btn { background: var(--btn-danger); }
     </style>
 </head>
-<body>
-    <div class="theme-toggle" id="themeToggle" style="display: flex; align-items: center; gap: 6px;">🌙 Тема</div>
-    <div class="container">
-        <div class="card">
-            <a href="/" class="back-link">← На главную</a>
-            <h1>🛡️ Админ-панель</h1>
-            <div id="adminContent">
-                <h2>👥 Пользователи</h2>
-                <table id="usersTable">
-                    <thead><tr><th>ID</th><th>Email</th><th>Роль</th><th>Действие</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-                <h2 style="margin-top: 32px;">📋 Заявки</h2>
-                <table id="jobsTable">
-                    <thead><tr><th>ID</th><th>Название</th><th>Описание</th><th>Удалить</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
+<body class="light">
+    <div class="theme-toggle" id="themeToggle">🌙 Тема</div>
+    <div class="card">
+        <h1>Админ-панель</h1>
+        <h2>Пользователи</h2>
+        <table id="usersTable"><thead><tr><th>ID</th><th>Email</th><th>Роль</th><th>Город</th><th>Действие</th></tr></thead><tbody></tbody></table>
+        <h2>Чёрный список</h2>
+        <table id="blacklistTable"><thead><tr><th>ID пользователя</th><th>Email</th><th>Причина</th><th>Дата бана</th><th>Действие</th></tr></thead><tbody></tbody></table>
     </div>
     <script>
-        // Тема
         const themeToggle = document.getElementById('themeToggle');
-        const root = document.documentElement;
-        if (localStorage.getItem('theme') === 'dark') {
-            root.classList.add('dark');
-            themeToggle.innerText = '☀️';
-        } else {
-            themeToggle.innerText = '🌙';
-        }
+        if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark'); themeToggle.innerText = '☀️ Тема'; }
         themeToggle.onclick = () => {
-            if (root.classList.contains('dark')) {
-                root.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-                themeToggle.innerText = '🌙';
-            } else {
-                root.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-                themeToggle.innerText = '☀️';
-            }
+            document.body.classList.toggle('dark');
+            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+            themeToggle.innerText = document.body.classList.contains('dark') ? '☀️ Тема' : '🌙 Тема';
         };
-
         const token = localStorage.getItem('token');
-        if (!token) {
-            alert('Нет доступа, войдите как администратор на главной странице');
-            location.href = '/';
-        }
+        if (!token) { alert('Нет доступа'); location.href = '/'; }
 
         async function loadUsers() {
             const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
-            if (!res.ok) return alert('Ошибка загрузки пользователей');
             const users = await res.json();
+            const blacklistRes = await fetch('/api/blacklist', { headers: { 'Authorization': `Bearer ${token}` } });
+            const blacklist = await blacklistRes.json();
+            const bannedIds = blacklist.map(b => b.userId);
             const tbody = document.querySelector('#usersTable tbody');
             tbody.innerHTML = '';
             for (let u of users) {
@@ -177,62 +52,72 @@
                 row.insertCell(1).innerText = u.email;
                 const roleCell = row.insertCell(2);
                 const select = document.createElement('select');
-                ['candidate', 'employer', 'admin'].forEach(r => {
+                ['candidate','employer','admin'].forEach(r => {
                     const opt = document.createElement('option');
                     opt.value = r;
-                    opt.innerText = r === 'candidate' ? 'Кандидат' : (r === 'employer' ? 'Работодатель' : 'Админ');
+                    opt.innerText = r;
                     if (u.role === r) opt.selected = true;
                     select.appendChild(opt);
                 });
                 select.onchange = () => updateRole(u.id, select.value);
                 roleCell.appendChild(select);
-                const actionCell = row.insertCell(3);
-                // можно добавить кнопку удаления пользователя, но не будем усложнять
-                actionCell.innerHTML = '';
+                row.insertCell(3).innerText = u.city || '-';
+                const actionCell = row.insertCell(4);
+                if (bannedIds.includes(u.id)) {
+                    const unbanBtn = document.createElement('button');
+                    unbanBtn.innerText = 'Разбанить';
+                    unbanBtn.onclick = () => unbanUser(u.id);
+                    actionCell.appendChild(unbanBtn);
+                } else {
+                    const banBtn = document.createElement('button');
+                    banBtn.innerText = 'Забанить';
+                    banBtn.classList.add('ban-btn');
+                    banBtn.onclick = () => banUser(u.id);
+                    actionCell.appendChild(banBtn);
+                }
             }
         }
 
         async function updateRole(userId, newRole) {
-            const res = await fetch(`/api/users/${userId}/role`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ role: newRole })
-            });
-            if (res.ok) alert('Роль обновлена');
+            await fetch(`/api/users/${userId}/role`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ role: newRole }) });
+            alert('Роль обновлена');
+        }
+
+        async function banUser(userId) {
+            const reason = prompt('Причина бана:');
+            if (!reason) return;
+            const res = await fetch('/api/blacklist', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ userId, reason }) });
+            if (res.ok) { alert('Пользователь забанен'); loadUsers(); loadBlacklist(); }
             else alert('Ошибка');
         }
 
-        async function loadJobs() {
-            const res = await fetch('/api/jobs');
-            const jobs = await res.json();
-            const tbody = document.querySelector('#jobsTable tbody');
+        async function unbanUser(userId) {
+            const res = await fetch(`/api/blacklist/${userId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+            if (res.ok) { alert('Пользователь разбанен'); loadUsers(); loadBlacklist(); }
+            else alert('Ошибка');
+        }
+
+        async function loadBlacklist() {
+            const res = await fetch('/api/blacklist', { headers: { 'Authorization': `Bearer ${token}` } });
+            const blacklist = await res.json();
+            const tbody = document.querySelector('#blacklistTable tbody');
             tbody.innerHTML = '';
-            for (let j of jobs) {
+            for (let b of blacklist) {
                 const row = tbody.insertRow();
-                row.insertCell(0).innerText = j.id;
-                row.insertCell(1).innerText = j.title;
-                row.insertCell(2).innerText = j.description;
-                const delCell = row.insertCell(3);
-                const delBtn = document.createElement('button');
-                delBtn.innerText = 'Удалить';
-                delBtn.classList.add('delete-btn');
-                delBtn.onclick = () => deleteJob(j.id);
-                delCell.appendChild(delBtn);
+                row.insertCell(0).innerText = b.userId;
+                row.insertCell(1).innerText = b.email;
+                row.insertCell(2).innerText = b.reason;
+                row.insertCell(3).innerText = new Date(b.bannedAt).toLocaleString();
+                const actionCell = row.insertCell(4);
+                const unbanBtn = document.createElement('button');
+                unbanBtn.innerText = 'Разбанить';
+                unbanBtn.onclick = () => unbanUser(b.userId);
+                actionCell.appendChild(unbanBtn);
             }
         }
 
-        async function deleteJob(jobId) {
-            if (!confirm('Удалить заявку?')) return;
-            const res = await fetch(`/api/jobs/${jobId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) loadJobs();
-            else alert('Ошибка');
-        }
-
         loadUsers();
-        loadJobs();
+        loadBlacklist();
     </script>
 </body>
 </html>

@@ -14,9 +14,8 @@ app.use(express.json());
 
 const db = new sqlite3.Database('./database.db');
 
-// ==================== ИНИЦИАЛИЗАЦИЯ БД (расширенная) ====================
 db.serialize(() => {
-  // Таблица пользователей (добавлен город)
+  // Пользователи (с городом)
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE,
@@ -25,7 +24,7 @@ db.serialize(() => {
     city TEXT DEFAULT ''
   )`);
 
-  // Таблица заявок (добавлена категория)
+  // Заявки (с категорией, городом, статусом, assignedTo)
   db.run(`CREATE TABLE IF NOT EXISTS jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT,
@@ -34,49 +33,49 @@ db.serialize(() => {
     city TEXT DEFAULT '',
     employerId INTEGER,
     createdAt TEXT,
-    status TEXT DEFAULT 'open'   -- open, taken, completed
+    status TEXT DEFAULT 'open',
+    assignedTo INTEGER
   )`);
 
-  // Таблица откликов (новая)
+  // Отклики
   db.run(`CREATE TABLE IF NOT EXISTS responses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     jobId INTEGER,
     candidateId INTEGER,
     createdAt TEXT,
-    status TEXT DEFAULT 'pending'   -- pending, accepted, rejected
+    status TEXT DEFAULT 'pending'
   )`);
 
-  // Таблица чатов (для будущего этапа, пока заглушка)
-  db.run(`CREATE TABLE IF NOT EXISTS chats (
+  // Сообщения чата
+  db.run(`CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    responseId INTEGER,
+    jobId INTEGER,
     senderId INTEGER,
     message TEXT,
-    createdAt TEXT
+    createdAt TEXT,
+    isRead INTEGER DEFAULT 0
   )`);
 
-  // Чёрный список (пока просто таблица)
+  // Чёрный список
   db.run(`CREATE TABLE IF NOT EXISTS blacklist (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    userId INTEGER,
+    userId INTEGER UNIQUE,
     reason TEXT,
     bannedAt TEXT
   )`);
-  // Добавляем колонку assignedTo в таблицу jobs, если её нет
-db.run("ALTER TABLE jobs ADD COLUMN assignedTo INTEGER", (err) => {
+
+  // Добавляем колонку assignedTo в jobs, если её нет (миграция)
+  db.run("ALTER TABLE jobs ADD COLUMN assignedTo INTEGER", (err) => {
+    if (err && !err.message.includes('duplicate column name')) console.log(err);
+  });
+  db.run("ALTER TABLE jobs ADD COLUMN price INTEGER DEFAULT 0", (err) => {
   if (err && !err.message.includes('duplicate column name')) console.log(err);
 });
-// Создаём таблицу сообщений
-db.run(`CREATE TABLE IF NOT EXISTS messages (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  jobId INTEGER,
-  senderId INTEGER,
-  message TEXT,
-  createdAt TEXT,
-  isRead INTEGER DEFAULT 0
-)`);
+db.run("ALTER TABLE jobs ADD COLUMN paymentStatus TEXT DEFAULT 'pending'", (err) => {
+  if (err && !err.message.includes('duplicate column name')) console.log(err);
+});
 
-  // Создание админа (без города)
+  // Создаём админа
   const adminEmail = 'admin@example.com';
   const adminPass = 'admin123';
   db.get('SELECT * FROM users WHERE email = ?', [adminEmail], (err, row) => {
@@ -88,7 +87,7 @@ db.run(`CREATE TABLE IF NOT EXISTS messages (
   });
 });
 
-// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+// Middleware
 const auth = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token' });
@@ -101,16 +100,24 @@ const auth = (req, res, next) => {
   }
 };
 
-// ==================== API ПОЛЬЗОВАТЕЛЕЙ ====================
+const checkBanned = (req, res, next) => {
+  if (!req.user) return next();
+  db.get('SELECT * FROM blacklist WHERE userId = ?', [req.user.id], (err, banned) => {
+    if (banned) return res.status(403).json({ error: 'You are banned. Contact admin.' });
+    next();
+  });
+};
+
+// === API ПОЛЬЗОВАТЕЛЕЙ ===
 app.post('/api/register', (req, res) => {
   const { email, password, role, city } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
   const hashed = bcrypt.hashSync(password, 10);
-  db.run('INSERT INTO users (email, password, role, city) VALUES (?, ?, ?, ?)', 
+  db.run('INSERT INTO users (email, password, role, city) VALUES (?, ?, ?, ?)',
     [email, hashed, role || 'candidate', city || ''], function(err) {
-    if (err) return res.status(400).json({ error: 'User already exists' });
-    res.json({ id: this.lastID, email, role: role || 'candidate', city: city || '' });
-  });
+      if (err) return res.status(400).json({ error: 'User already exists' });
+      res.json({ id: this.lastID, email, role: role || 'candidate', city: city || '' });
+    });
 });
 
 app.post('/api/login', (req, res) => {
@@ -124,7 +131,6 @@ app.post('/api/login', (req, res) => {
   });
 });
 
-// Получить всех пользователей (для админа)
 app.get('/api/users', auth, (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   db.all('SELECT id, email, role, city FROM users', (err, rows) => {
@@ -132,7 +138,6 @@ app.get('/api/users', auth, (req, res) => {
   });
 });
 
-// Обновить роль (админ)
 app.put('/api/users/:id/role', auth, (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   const { role } = req.body;
@@ -142,23 +147,22 @@ app.put('/api/users/:id/role', auth, (req, res) => {
   });
 });
 
-// ==================== API ЗАЯВОК ====================
-// Создать заявку (employer или admin)
-app.post('/api/jobs', auth, (req, res) => {
+// === API ЗАЯВОК ===
+app.post('/api/jobs', auth, checkBanned, (req, res) => {
   if (req.user.role !== 'employer' && req.user.role !== 'admin') {
     return res.status(403).json({ error: 'Forbidden' });
   }
-  const { title, description, category, city } = req.body;
-  db.run(`INSERT INTO jobs (title, description, category, city, employerId, createdAt, status) 
-          VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [title, description, category || 'other', city || '', req.user.id, new Date().toISOString(), 'open'], 
+  const { title, description, category, city, price } = req.body;
+  const jobPrice = parseInt(price) || 0;
+  db.run(`INSERT INTO jobs (title, description, category, city, employerId, createdAt, status, price, paymentStatus) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [title, description, category || 'other', city || '', req.user.id, new Date().toISOString(), 'open', jobPrice, 'pending'], 
     function(err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID, title, description, category, city, status: 'open' });
+      res.json({ id: this.lastID, title, description, category, city, price: jobPrice, paymentStatus: 'pending' });
     });
 });
 
-// Получить все заявки (с возможностью фильтра по городу)
 app.get('/api/jobs', (req, res) => {
   const { city } = req.query;
   let sql = 'SELECT * FROM jobs ORDER BY createdAt DESC';
@@ -172,14 +176,12 @@ app.get('/api/jobs', (req, res) => {
   });
 });
 
-// Получить заявки текущего пользователя (для "Мои заявки")
 app.get('/api/my-jobs', auth, (req, res) => {
   db.all('SELECT * FROM jobs WHERE employerId = ? ORDER BY createdAt DESC', [req.user.id], (err, rows) => {
     res.json(rows);
   });
 });
 
-// Удалить заявку (только админ или владелец)
 app.delete('/api/jobs/:id', auth, (req, res) => {
   db.get('SELECT employerId FROM jobs WHERE id = ?', [req.params.id], (err, job) => {
     if (!job) return res.status(404).json({ error: 'Job not found' });
@@ -193,26 +195,20 @@ app.delete('/api/jobs/:id', auth, (req, res) => {
   });
 });
 
-// ==================== API ОТКЛИКОВ ====================
-// Откликнуться на заявку (только кандидат)
-app.post('/api/responses', auth, (req, res) => {
+// === API ОТКЛИКОВ (с автоназначением первого) ===
+app.post('/api/responses', auth, checkBanned, (req, res) => {
   if (req.user.role !== 'candidate') return res.status(403).json({ error: 'Only candidates can respond' });
   const { jobId } = req.body;
-  
   db.get('SELECT status, employerId FROM jobs WHERE id = ?', [jobId], (err, job) => {
     if (err || !job) return res.status(404).json({ error: 'Job not found' });
     if (job.status !== 'open') return res.status(400).json({ error: 'Job is already taken or completed' });
-    
     db.get('SELECT * FROM responses WHERE jobId = ? AND candidateId = ?', [jobId, req.user.id], (err, existing) => {
       if (existing) return res.status(400).json({ error: 'Already responded' });
-      
       db.get('SELECT COUNT(*) as count FROM responses WHERE jobId = ?', [jobId], (err, countResult) => {
         const isFirst = (countResult.count === 0);
-        
         db.run('INSERT INTO responses (jobId, candidateId, createdAt, status) VALUES (?, ?, ?, ?)',
           [jobId, req.user.id, new Date().toISOString(), 'pending'], function(err) {
             if (err) return res.status(500).json({ error: err.message });
-            
             if (isFirst) {
               db.run('UPDATE jobs SET status = ?, assignedTo = ? WHERE id = ?', ['taken', req.user.id, jobId], (err) => {
                 if (err) console.error(err);
@@ -226,76 +222,26 @@ app.post('/api/responses', auth, (req, res) => {
     });
   });
 });
-// Назначить исполнителя (закрыть заявку для других откликов)
-app.put('/api/jobs/:jobId/assign', auth, (req, res) => {
-    const jobId = req.params.jobId;
-    const { candidateId } = req.body;
-    // Проверяем права (только владелец или админ)
-    db.get('SELECT employerId, status FROM jobs WHERE id = ?', [jobId], (err, job) => {
-        if (!job) return res.status(404).json({ error: 'Job not found' });
-        if (req.user.role !== 'admin' && job.employerId !== req.user.id) {
-            return res.status(403).json({ error: 'Forbidden' });
-        }
-        if (job.status !== 'open') return res.status(400).json({ error: 'Job already taken or completed' });
-        
-        // Обновляем статус заявки
-        db.run('UPDATE jobs SET status = ?, assignedTo = ? WHERE id = ?', ['taken', candidateId, jobId], function(err) {
-  if (err) return res.status(500).json({ error: err.message });
-  res.json({ success: true, jobId, candidateId });
-});
-    });
-});
-// Получить отклики для конкретной заявки (только для владельца или админа)
-app.get('/api/responses/by-job/:jobId', auth, (req, res) => {
-    const jobId = req.params.jobId;
-    // Проверяем, что пользователь является владельцем заявки или админом
-    db.get('SELECT employerId FROM jobs WHERE id = ?', [jobId], (err, job) => {
-        if (!job) return res.status(404).json({ error: 'Job not found' });
-        if (req.user.role !== 'admin' && job.employerId !== req.user.id) {
-            return res.status(403).json({ error: 'Forbidden' });
-        }
-        db.all(`
-            SELECT r.*, u.email as candidateEmail 
-            FROM responses r
-            JOIN users u ON r.candidateId = u.id
-            WHERE r.jobId = ?
-            ORDER BY r.createdAt ASC
-        `, [jobId], (err, rows) => {
-            res.json(rows);
-        });
-    });
-});
 
-// Получить отклики для заявок текущего работодателя (или для админа)
-app.get('/api/responses/for-employer', auth, (req, res) => {
-  if (req.user.role !== 'employer' && req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
-  let sql = `
-    SELECT r.*, j.title as jobTitle, u.email as candidateEmail 
-    FROM responses r
-    JOIN jobs j ON r.jobId = j.id
-    JOIN users u ON r.candidateId = u.id
-    WHERE j.employerId = ?
-    ORDER BY r.createdAt DESC
-  `;
-  let params = [req.user.id];
-  if (req.user.role === 'admin') {
-    sql = `
-      SELECT r.*, j.title as jobTitle, u.email as candidateEmail 
+app.get('/api/responses/by-job/:jobId', auth, (req, res) => {
+  const jobId = req.params.jobId;
+  db.get('SELECT employerId FROM jobs WHERE id = ?', [jobId], (err, job) => {
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    if (req.user.role !== 'admin' && job.employerId !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    db.all(`
+      SELECT r.*, u.email as candidateEmail 
       FROM responses r
-      JOIN jobs j ON r.jobId = j.id
       JOIN users u ON r.candidateId = u.id
-      ORDER BY r.createdAt DESC
-    `;
-    params = [];
-  }
-  db.all(sql, params, (err, rows) => {
-    res.json(rows);
+      WHERE r.jobId = ?
+      ORDER BY r.createdAt ASC
+    `, [jobId], (err, rows) => {
+      res.json(rows);
+    });
   });
 });
 
-// Получить отклики текущего кандидата
 app.get('/api/my-responses', auth, (req, res) => {
   if (req.user.role !== 'candidate') return res.status(403).json({ error: 'Forbidden' });
   db.all(`
@@ -309,19 +255,7 @@ app.get('/api/my-responses', auth, (req, res) => {
   });
 });
 
-// ==================== ОБНОВЛЕНИЕ СТАТУСА ЗАЯВКИ (взять в работу) ====================
-app.put('/api/jobs/:id/take', auth, (req, res) => {
-  if (req.user.role !== 'candidate') return res.status(403).json({ error: 'Only candidates can take jobs' });
-  // Проверяем, есть ли отклик
-  db.get('SELECT * FROM responses WHERE jobId = ? AND candidateId = ?', [req.params.id, req.user.id], (err, response) => {
-    if (!response) return res.status(400).json({ error: 'You must respond first' });
-    db.run('UPDATE jobs SET status = ? WHERE id = ?', ['taken', req.params.id], function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json({ taken: req.params.id });
-    });
-  });
-});
-// Получить сообщения по заявке (только для участников или админа)
+// === API ЧАТА ===
 app.get('/api/messages/:jobId', auth, (req, res) => {
   const jobId = req.params.jobId;
   db.get('SELECT employerId, assignedTo FROM jobs WHERE id = ?', [jobId], (err, job) => {
@@ -336,7 +270,6 @@ app.get('/api/messages/:jobId', auth, (req, res) => {
   });
 });
 
-// Отправить сообщение
 app.post('/api/messages', auth, (req, res) => {
   const { jobId, message } = req.body;
   if (!message || !jobId) return res.status(400).json({ error: 'Missing fields' });
@@ -354,7 +287,53 @@ app.post('/api/messages', auth, (req, res) => {
   });
 });
 
-// ==================== СТАТИКА ====================
+// === API ЧЁРНОГО СПИСКА (только админ) ===
+app.get('/api/blacklist', auth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  db.all(`
+    SELECT b.userId, u.email, u.role, b.reason, b.bannedAt
+    FROM blacklist b
+    JOIN users u ON b.userId = u.id
+  `, (err, rows) => {
+    res.json(rows);
+  });
+});
+
+app.post('/api/blacklist', auth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  const { userId, reason } = req.body;
+  db.run('INSERT OR REPLACE INTO blacklist (userId, reason, bannedAt) VALUES (?, ?, ?)',
+    [userId, reason || 'No reason', new Date().toISOString()], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true, userId });
+    });
+});
+
+app.delete('/api/blacklist/:userId', auth, (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  db.run('DELETE FROM blacklist WHERE userId = ?', [req.params.userId], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
+// Симуляция оплаты (только для заказчика)
+app.post('/api/pay/:jobId', auth, (req, res) => {
+  const jobId = req.params.jobId;
+  db.get('SELECT employerId, paymentStatus, price FROM jobs WHERE id = ?', [jobId], (err, job) => {
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    if (job.employerId !== req.user.id) return res.status(403).json({ error: 'Not your job' });
+    if (job.paymentStatus !== 'pending') return res.status(400).json({ error: 'Already paid' });
+    if (job.price <= 0) return res.status(400).json({ error: 'Invalid price' });
+    
+    // Симуляция успешного платежа
+    db.run('UPDATE jobs SET paymentStatus = ? WHERE id = ?', ['paid', jobId], (err) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true, message: 'Оплата прошла успешно (симуляция)', jobId });
+    });
+  });
+});
+
+// === СТАТИКА ===
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
