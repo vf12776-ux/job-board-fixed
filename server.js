@@ -195,6 +195,46 @@ app.post('/api/responses', auth, (req, res) => {
       });
   });
 });
+// Назначить исполнителя (закрыть заявку для других откликов)
+app.put('/api/jobs/:jobId/assign', auth, (req, res) => {
+    const jobId = req.params.jobId;
+    const { candidateId } = req.body;
+    // Проверяем права (только владелец или админ)
+    db.get('SELECT employerId, status FROM jobs WHERE id = ?', [jobId], (err, job) => {
+        if (!job) return res.status(404).json({ error: 'Job not found' });
+        if (req.user.role !== 'admin' && job.employerId !== req.user.id) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+        if (job.status !== 'open') return res.status(400).json({ error: 'Job already taken or completed' });
+        
+        // Обновляем статус заявки
+        db.run('UPDATE jobs SET status = ? WHERE id = ?', ['taken', jobId], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            // Можно также записать назначенного кандидата в отдельное поле, но пока просто меняем статус
+            res.json({ success: true, jobId, candidateId });
+        });
+    });
+});
+// Получить отклики для конкретной заявки (только для владельца или админа)
+app.get('/api/responses/by-job/:jobId', auth, (req, res) => {
+    const jobId = req.params.jobId;
+    // Проверяем, что пользователь является владельцем заявки или админом
+    db.get('SELECT employerId FROM jobs WHERE id = ?', [jobId], (err, job) => {
+        if (!job) return res.status(404).json({ error: 'Job not found' });
+        if (req.user.role !== 'admin' && job.employerId !== req.user.id) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+        db.all(`
+            SELECT r.*, u.email as candidateEmail 
+            FROM responses r
+            JOIN users u ON r.candidateId = u.id
+            WHERE r.jobId = ?
+            ORDER BY r.createdAt ASC
+        `, [jobId], (err, rows) => {
+            res.json(rows);
+        });
+    });
+});
 
 // Получить отклики для заявок текущего работодателя (или для админа)
 app.get('/api/responses/for-employer', auth, (req, res) => {

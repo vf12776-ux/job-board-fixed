@@ -357,6 +357,21 @@
                 alert(err.error || 'Ошибка');
             }
         }
+        async function assignJob(jobId, candidateId) {
+    const res = await fetch(`/api/jobs/${jobId}/assign`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ candidateId })
+    });
+    if (res.ok) {
+        showNotification('Исполнитель назначен, заявка закрыта для новых откликов', 'success');
+        loadMyJobs();
+        loadJobs(); // обновляем ленту, чтобы кнопка отклика исчезла
+    } else {
+        const err = await res.json();
+        showNotification(err.error, 'error');
+    }
+}
 
         async function deleteJob(jobId) {
             if (!confirm('Удалить заявку?')) return;
@@ -368,19 +383,51 @@
         }
 
         async function loadMyJobs() {
-            const res = await fetch('/api/my-jobs', { headers: { 'Authorization': `Bearer ${token}` } });
-            const jobs = await res.json();
-            const container = document.getElementById('myJobsList');
-            container.innerHTML = '';
-            if (jobs.length === 0) { container.innerHTML = '<p>Вы ещё не создали заявок</p>'; return; }
-            for (let job of jobs) {
-                const div = document.createElement('div');
-                div.className = 'job';
-                div.innerHTML = `<strong>${escapeHtml(job.title)}</strong><br>${escapeHtml(job.description)}<br><small>${job.city || ''} | ${job.status}</small>`;
-                container.appendChild(div);
+    const res = await fetch('/api/my-jobs', { headers: { 'Authorization': `Bearer ${token}` } });
+    const jobs = await res.json();
+    const container = document.getElementById('myJobsList');
+    container.innerHTML = '';
+    if (jobs.length === 0) { container.innerHTML = '<p>Вы ещё не создали заявок</p>'; return; }
+    
+    for (let job of jobs) {
+        const jobDiv = document.createElement('div');
+        jobDiv.className = 'job';
+        jobDiv.innerHTML = `
+            <strong>${escapeHtml(job.title)}</strong><br>
+            ${escapeHtml(job.description)}<br>
+            <small>📍 ${job.city || 'Город не указан'} | Статус: ${job.status === 'open' ? '🔓 Открыта' : (job.status === 'taken' ? '🔨 В работе' : '✅ Завершена')}</small>
+        `;
+        
+        // Загружаем отклики для этой заявки
+        const responsesRes = await fetch(`/api/responses/by-job/${job.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (responsesRes.ok) {
+            const responses = await responsesRes.json();
+            if (responses.length > 0) {
+                const responsesDiv = document.createElement('div');
+                responsesDiv.style.marginTop = '12px';
+                responsesDiv.style.padding = '8px';
+                responsesDiv.style.borderTop = '1px solid var(--border)';
+                responsesDiv.innerHTML = '<strong>📞 Отклики:</strong><br>';
+                for (let r of responses) {
+                    responsesDiv.innerHTML += `
+                        <div style="margin: 6px 0; display: flex; justify-content: space-between; align-items: center;">
+                            <span>👤 ${escapeHtml(r.candidateEmail)} (${new Date(r.createdAt).toLocaleString()})</span>
+                            ${job.status === 'open' ? `<button onclick="assignJob(${job.id}, ${r.candidateId})">Назначить</button>` : ''}
+                        </div>
+                    `;
+                }
+                jobDiv.appendChild(responsesDiv);
+            } else {
+                const noResponses = document.createElement('div');
+                noResponses.style.marginTop = '12px';
+                noResponses.style.fontSize = '0.8rem';
+                noResponses.innerText = 'Пока нет откликов';
+                jobDiv.appendChild(noResponses);
             }
         }
-
+        container.appendChild(jobDiv);
+    }
+}
         async function loadMyResponses() {
             const res = await fetch('/api/my-responses', { headers: { 'Authorization': `Bearer ${token}` } });
             const responses = await res.json();
@@ -515,6 +562,7 @@
         window.logout = logout;
         window.createJob = createJob;
         window.respondToJob = respondToJob;
+        window.assignJob = assignJob;
         window.deleteJob = deleteJob;
         window.switchView = switchView;
     </script>
