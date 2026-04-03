@@ -132,6 +132,55 @@
             flex-wrap: wrap;
         }
         .filter-bar select { flex: 1; margin: 0; }
+        /* Модальное окно чата */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+.modal-content {
+  background-color: var(--bg-card);
+  margin: 15% auto;
+  padding: 20px;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 70%;
+  display: flex;
+  flex-direction: column;
+}
+.close {
+  color: var(--text-secondary);
+  float: right;
+  font-size: 28px;
+  cursor: pointer;
+}
+#chatMessages {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  min-height: 200px;
+}
+.message {
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 16px;
+  background: var(--input-bg);
+}
+.message strong { color: var(--btn-primary); }
+#chatInput {
+  width: calc(100% - 70px);
+  display: inline-block;
+  margin-right: 8px;
+}
     </style>
 </head>
 <body class="light">
@@ -330,6 +379,14 @@
                     respondBtn.onclick = () => respondToJob(job.id);
                     div.appendChild(respondBtn);
                 }
+                    
+                // После добавления кнопки "Откликнуться" или в конец блока
+if (job.status === 'taken' && user && (user.id === job.employerId || user.id === job.assignedTo)) {
+    const chatBtn = document.createElement('button');
+    chatBtn.innerText = '💬 Чат';
+    chatBtn.onclick = () => openChat(job.id);
+    div.appendChild(chatBtn);
+}
                 // Кнопка удаления для работодателя/админа (только для своих заявок или админ)
                 if (user && (user.role === 'employer' || user.role === 'admin')) {
                     const deleteBtn = document.createElement('button');
@@ -398,6 +455,14 @@
             <small>📍 ${job.city || 'Город не указан'} | Статус: ${job.status === 'open' ? '🔓 Открыта' : (job.status === 'taken' ? '🔨 В работе' : '✅ Завершена')}</small>
         `;
         
+        // Кнопка чата, если заявка взята в работу
+        if (job.status === 'taken' && user && (user.id === job.employerId || user.id === job.assignedTo)) {
+            const chatBtn = document.createElement('button');
+            chatBtn.innerText = '💬 Чат';
+            chatBtn.onclick = () => openChat(job.id);
+            jobDiv.appendChild(chatBtn);
+        }
+        
         // Загружаем отклики для этой заявки
         const responsesRes = await fetch(`/api/responses/by-job/${job.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (responsesRes.ok) {
@@ -429,18 +494,32 @@
     }
 }
         async function loadMyResponses() {
-            const res = await fetch('/api/my-responses', { headers: { 'Authorization': `Bearer ${token}` } });
-            const responses = await res.json();
-            const container = document.getElementById('myResponsesList');
-            container.innerHTML = '';
-            if (responses.length === 0) { container.innerHTML = '<p>Вы ещё не откликались</p>'; return; }
-            for (let r of responses) {
-                const div = document.createElement('div');
-                div.className = 'job';
-                div.innerHTML = `<strong>${escapeHtml(r.jobTitle)}</strong><br>${escapeHtml(r.description)}<br><small>📍 ${r.city || ''}</small><br><span>📅 ${new Date(r.createdAt).toLocaleString()}</span>`;
-                container.appendChild(div);
-            }
+    const res = await fetch('/api/my-responses', { headers: { 'Authorization': `Bearer ${token}` } });
+    const responses = await res.json();
+    const container = document.getElementById('myResponsesList');
+    container.innerHTML = '';
+    if (responses.length === 0) { container.innerHTML = '<p>Вы ещё не откликались</p>'; return; }
+    for (let r of responses) {
+        const div = document.createElement('div');
+        div.className = 'job';
+        div.innerHTML = `
+            <strong>${escapeHtml(r.jobTitle)}</strong><br>
+            ${escapeHtml(r.description)}<br>
+            <small>📍 ${r.city || ''}</small><br>
+            <span>📅 ${new Date(r.createdAt).toLocaleString()}</span>
+            <br><span>Статус заявки: ${r.status === 'open' ? '🔓 Открыта' : (r.status === 'taken' ? '🔨 В работе' : '✅ Завершена')}</span>
+        `;
+        
+        // Кнопка чата, если заявка взята в работу и пользователь участник
+        if (r.status === 'taken' && user && (user.id === r.employerId || user.id === r.assignedTo)) {
+            const chatBtn = document.createElement('button');
+            chatBtn.innerText = '💬 Чат';
+            chatBtn.onclick = () => openChat(r.jobId);
+            div.appendChild(chatBtn);
         }
+        container.appendChild(div);
+    }
+}
 
         async function createJob() {
             const title = document.getElementById('jobTitle').value.trim();
@@ -556,6 +635,67 @@
                 })
                 .catch(() => localStorage.removeItem('token'));
         }
+        // Глобальные переменные для чата
+let currentChatJobId = null;
+
+async function openChat(jobId) {
+  currentChatJobId = jobId;
+  const modal = document.getElementById('chatModal');
+  modal.style.display = 'block';
+  await loadChatMessages();
+}
+
+function closeChat() {
+  document.getElementById('chatModal').style.display = 'none';
+  currentChatJobId = null;
+}
+
+async function loadChatMessages() {
+  if (!currentChatJobId) return;
+  const res = await fetch(`/api/messages/${currentChatJobId}`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  if (res.ok) {
+    const messages = await res.json();
+    const container = document.getElementById('chatMessages');
+    container.innerHTML = '';
+    for (let msg of messages) {
+      const div = document.createElement('div');
+      div.className = 'message';
+      const senderName = (msg.senderId === user.id) ? 'Вы' : (msg.senderId === user.id ? 'Вы' : (user.role === 'candidate' ? 'Работодатель' : 'Исполнитель'));
+      // Упрощённо: если отправитель не текущий пользователь, показываем "Собеседник"
+      const displayName = (msg.senderId === user.id) ? 'Вы' : 'Собеседник';
+      div.innerHTML = `<strong>${displayName}:</strong> ${escapeHtml(msg.message)}<br><small>${new Date(msg.createdAt).toLocaleString()}</small>`;
+      container.appendChild(div);
+    }
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+async function sendChatMessage() {
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+  if (!message || !currentChatJobId) return;
+  const res = await fetch('/api/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ jobId: currentChatJobId, message })
+  });
+  if (res.ok) {
+    input.value = '';
+    await loadChatMessages();
+  } else {
+    alert('Ошибка отправки');
+  }
+}
+
+// Закрытие модального окна
+document.getElementById('closeChat').onclick = closeChat;
+window.onclick = function(event) {
+  const modal = document.getElementById('chatModal');
+  if (event.target === modal) closeChat();
+};
+document.getElementById('sendMessageBtn').onclick = sendChatMessage;
 
         window.register = register;
         window.login = login;
@@ -566,5 +706,14 @@
         window.deleteJob = deleteJob;
         window.switchView = switchView;
     </script>
+    <div id="chatModal" class="modal">
+  <div class="modal-content">
+    <span class="close" id="closeChat">&times;</span>
+    <h3>💬 Чат по заявке</h3>
+    <div id="chatMessages"></div>
+    <input type="text" id="chatInput" placeholder="Введите сообщение...">
+    <button id="sendMessageBtn">Отправить</button>
+  </div>
+</div>
 </body>
 </html>

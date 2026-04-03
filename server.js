@@ -62,6 +62,19 @@ db.serialize(() => {
     reason TEXT,
     bannedAt TEXT
   )`);
+  // Добавляем колонку assignedTo в таблицу jobs, если её нет
+db.run("ALTER TABLE jobs ADD COLUMN assignedTo INTEGER", (err) => {
+  if (err && !err.message.includes('duplicate column name')) console.log(err);
+});
+// Создаём таблицу сообщений
+db.run(`CREATE TABLE IF NOT EXISTS messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  jobId INTEGER,
+  senderId INTEGER,
+  message TEXT,
+  createdAt TEXT,
+  isRead INTEGER DEFAULT 0
+)`);
 
   // Создание админа (без города)
   const adminEmail = 'admin@example.com';
@@ -208,11 +221,10 @@ app.put('/api/jobs/:jobId/assign', auth, (req, res) => {
         if (job.status !== 'open') return res.status(400).json({ error: 'Job already taken or completed' });
         
         // Обновляем статус заявки
-        db.run('UPDATE jobs SET status = ? WHERE id = ?', ['taken', jobId], function(err) {
-            if (err) return res.status(500).json({ error: err.message });
-            // Можно также записать назначенного кандидата в отдельное поле, но пока просто меняем статус
-            res.json({ success: true, jobId, candidateId });
-        });
+        db.run('UPDATE jobs SET status = ?, assignedTo = ? WHERE id = ?', ['taken', candidateId, jobId], function(err) {
+  if (err) return res.status(500).json({ error: err.message });
+  res.json({ success: true, jobId, candidateId });
+});
     });
 });
 // Получить отклики для конкретной заявки (только для владельца или админа)
@@ -269,7 +281,7 @@ app.get('/api/responses/for-employer', auth, (req, res) => {
 app.get('/api/my-responses', auth, (req, res) => {
   if (req.user.role !== 'candidate') return res.status(403).json({ error: 'Forbidden' });
   db.all(`
-    SELECT r.*, j.title as jobTitle, j.description, j.city 
+    SELECT r.*, j.title as jobTitle, j.description, j.city, j.status, j.assignedTo, j.employerId
     FROM responses r
     JOIN jobs j ON r.jobId = j.id
     WHERE r.candidateId = ?
@@ -288,6 +300,38 @@ app.put('/api/jobs/:id/take', auth, (req, res) => {
     db.run('UPDATE jobs SET status = ? WHERE id = ?', ['taken', req.params.id], function(err) {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ taken: req.params.id });
+    });
+  });
+});
+// Получить сообщения по заявке (только для участников или админа)
+app.get('/api/messages/:jobId', auth, (req, res) => {
+  const jobId = req.params.jobId;
+  db.get('SELECT employerId, assignedTo FROM jobs WHERE id = ?', [jobId], (err, job) => {
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    const isParticipant = (req.user.id === job.employerId || req.user.id === job.assignedTo);
+    if (!isParticipant && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    db.all('SELECT * FROM messages WHERE jobId = ? ORDER BY createdAt ASC', [jobId], (err, rows) => {
+      res.json(rows);
+    });
+  });
+});
+
+// Отправить сообщение
+app.post('/api/messages', auth, (req, res) => {
+  const { jobId, message } = req.body;
+  if (!message || !jobId) return res.status(400).json({ error: 'Missing fields' });
+  db.get('SELECT employerId, assignedTo FROM jobs WHERE id = ?', [jobId], (err, job) => {
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    const isParticipant = (req.user.id === job.employerId || req.user.id === job.assignedTo);
+    if (!isParticipant && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    db.run('INSERT INTO messages (jobId, senderId, message, createdAt) VALUES (?, ?, ?, ?)',
+      [jobId, req.user.id, message, new Date().toISOString()], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID, jobId, senderId: req.user.id, message, createdAt: new Date().toISOString() });
     });
   });
 });
