@@ -430,13 +430,13 @@
                     chatBtn.onclick = () => openChat(job.id);
                     div.appendChild(chatBtn);
                 }
-                if (user && (user.role === 'employer' || user.role === 'admin')) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.innerText = '❌ Удалить';
-                    deleteBtn.classList.add('danger-btn');
-                    deleteBtn.onclick = () => deleteJob(job.id);
-                    div.appendChild(deleteBtn);
-                }
+                if (user && (user.role === 'admin' || (user.role === 'employer' && job.employerId === user.id))) {
+    const deleteBtn = document.createElement('button');
+    deleteBtn.innerText = '❌ Удалить';
+    deleteBtn.classList.add('danger-btn');
+    deleteBtn.onclick = () => deleteJob(job.id);
+    div.appendChild(deleteBtn);
+}
                 container.appendChild(div);
             }
         }
