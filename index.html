@@ -368,7 +368,7 @@
         }
 
         async function loadCityFilter() {
-            const res = await fetch('/api/jobs');
+            const res = await fetch('/api/jobs?city=all');
             const jobs = await res.json();
             const cities = [...new Set(jobs.map(j => j.city).filter(c => c))];
             const select = document.getElementById('cityFilter');

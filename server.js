@@ -190,15 +190,53 @@ app.post('/api/jobs', auth, checkBanned, (req, res) => {
 
 app.get('/api/jobs', (req, res) => {
   const { city } = req.query;
-  let sql = 'SELECT * FROM jobs ORDER BY createdAt DESC';
-  let params = [];
-  if (city && city !== 'all') {
-    sql = 'SELECT * FROM jobs WHERE city = ? ORDER BY createdAt DESC';
-    params = [city];
+  // Получаем токен и определяем пользователя
+  const token = req.headers.authorization?.split(' ')[1];
+  let userId = null;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      userId = decoded.id;
+    } catch(e) {}
   }
-  db.all(sql, params, (err, rows) => {
-    res.json(rows);
-  });
+
+  if (userId) {
+    // Если пользователь авторизован, берём его город из БД
+    db.get('SELECT city FROM users WHERE id = ?', [userId], (err, user) => {
+      if (err) return res.status(500).json({ error: err.message });
+      const userCity = user ? user.city : null;
+      buildQuery(city, userCity);
+    });
+  } else {
+    buildQuery(city, null);
+  }
+
+  function buildQuery(cityParam, userCity) {
+    let sql = 'SELECT * FROM jobs';
+    let params = [];
+    let conditions = [];
+
+    if (cityParam && cityParam !== 'all') {
+      // Если передан конкретный город — фильтруем по нему
+      conditions.push('city = ?');
+      params.push(cityParam);
+    } else if (!cityParam && userCity) {
+      // Если параметр city не передан и пользователь авторизован — фильтруем по его городу
+      conditions.push('city = ?');
+      params.push(userCity);
+    }
+    // Если cityParam === 'all' — не добавляем фильтр (показываем все города)
+
+    if (conditions.length) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    sql += ' ORDER BY createdAt DESC';
+
+    db.all(sql, params, (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  }
 });
 
 app.get('/api/my-jobs', auth, (req, res) => {
