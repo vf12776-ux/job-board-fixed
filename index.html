@@ -102,6 +102,7 @@
             z-index: 100;
             box-shadow: var(--shadow);
         }
+        /* ========== НИЖНЕЕ МЕНЮ (Авито-стайл) ========== */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -122,10 +123,18 @@
             background: none;
             border: none;
             color: var(--text-secondary);
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 30px;
+            transition: all 0.2s;
         }
-        .nav-item.active { color: var(--btn-primary); }
+        .nav-item span:first-child { font-size: 1.5rem; }
+        .nav-item.active {
+            color: #3b82f6;
+            background: rgba(59,130,246,0.1);
+            font-weight: 500;
+        }
         .error { color: #ef4444; font-size: 0.8rem; margin-top: 8px; }
         hr { margin: 12px 0; border-color: var(--border); }
         .filter-bar {
@@ -190,33 +199,33 @@
     <div class="container" id="app">
         <!-- Блок для неавторизованных -->
         <div id="authBlock" class="card">
-    <h1>📋 Доска заявок</h1>
-    <h2>Вход / Регистрация</h2>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Пароль">
-    <select id="role">
-        <option value="candidate">👤 Кандидат</option>
-        <option value="employer">🏢 Работодатель</option>
-    </select>
-    <input type="text" id="city" placeholder="Город (например, Москва)">
-    <input type="tel" id="phone" placeholder="Телефон (например, +7 123 456-78-90)">
-    <div>
-        <button onclick="register()">Регистрация</button>
-        <button onclick="login()">Вход</button>
-    </div>
-    <div id="authError" class="error"></div>
-</div>
+            <h1>📋 Доска заявок</h1>
+            <h2>Вход / Регистрация</h2>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Пароль">
+            <select id="role">
+                <option value="candidate">👤 Кандидат</option>
+                <option value="employer">🏢 Работодатель</option>
+            </select>
+            <input type="text" id="city" placeholder="Город (например, Москва)">
+            <input type="tel" id="phone" placeholder="Телефон (например, +7 123 456-78-90)">
+            <div>
+                <button onclick="register()">Регистрация</button>
+                <button onclick="login()">Вход</button>
+            </div>
+            <div id="authError" class="error"></div>
+        </div>
 
         <!-- Блок для авторизованных -->
         <div id="mainApp" style="display: none;">
-            <!-- Карточка пользователя (краткая) -->
+            <!-- Краткая карточка пользователя (можно скрыть, но оставим для информации) -->
             <div class="card" style="margin-bottom: 10px;">
                 <p>✅ Вы вошли как <strong id="userRoleDisplay"></strong> (город: <span id="userCityDisplay"></span>)</p>
-                <button onclick="logout()" class="secondary-btn" style="background: var(--btn-secondary);">Выйти</button>
+                <button onclick="logout()" style="background: #6b7280;">Выйти</button>
                 <hr>
             </div>
 
-            <!-- Лента (главная) -->
+            <!-- Лента -->
             <div id="feedView">
                 <div class="card">
                     <h2>📢 Лента заявок</h2>
@@ -263,7 +272,7 @@
                     <p><strong>Роль:</strong> <span id="profileRole"></span></p>
                     <p><strong>Город:</strong> <span id="profileCity"></span></p>
                     <p><strong>Телефон:</strong> <span id="profilePhone"></span></p>
-                    <button id="logoutBtnFromProfile">Выйти</button>
+                    <button id="logoutBtnFromProfile" style="background: #6b7280;">Выйти</button>
                 </div>
             </div>
 
@@ -286,13 +295,13 @@
         </div>
     </div>
 
-    <!-- Нижнее меню (5 кнопок) -->
+    <!-- Нижнее меню (Авито-стайл) -->
     <div class="bottom-nav" id="bottomNav" style="display: none;">
-        <button class="nav-item" data-view="feed">📰 Лента</button>
-        <button class="nav-item" data-view="myJobs" id="myJobsNavBtn">📋 Мои заявки</button>
-        <button class="nav-item" data-view="myResponses" id="myResponsesNavBtn">💬 Отклики</button>
-        <button class="nav-item" data-view="executorChat">💬 Чат исполнителей</button>
-        <button class="nav-item" data-view="profile">👤 Профиль</button>
+        <button class="nav-item" data-view="feed"><span>📰</span><span>Лента</span></button>
+        <button class="nav-item" data-view="myJobs" id="myJobsNavBtn"><span>📋</span><span>Мои заявки</span></button>
+        <button class="nav-item" data-view="myResponses" id="myResponsesNavBtn"><span>💬</span><span>Отклики</span></button>
+        <button class="nav-item" data-view="executorChat"><span>💬</span><span>Чат исполнителей</span></button>
+        <button class="nav-item" data-view="profile"><span>👤</span><span>Профиль</span></button>
     </div>
 
     <!-- Модальное окно чата по заявке -->
@@ -430,13 +439,14 @@
                     chatBtn.onclick = () => openChat(job.id);
                     div.appendChild(chatBtn);
                 }
+                // Кнопка удаления: только для своих заявок (работодатель) или админ
                 if (user && (user.role === 'admin' || (user.role === 'employer' && job.employerId === user.id))) {
-    const deleteBtn = document.createElement('button');
-    deleteBtn.innerText = '❌ Удалить';
-    deleteBtn.classList.add('danger-btn');
-    deleteBtn.onclick = () => deleteJob(job.id);
-    div.appendChild(deleteBtn);
-}
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerText = '❌ Удалить';
+                    deleteBtn.classList.add('danger-btn');
+                    deleteBtn.onclick = () => deleteJob(job.id);
+                    div.appendChild(deleteBtn);
+                }
                 container.appendChild(div);
             }
         }
@@ -620,8 +630,6 @@
             if (view === 'myJobs') { myJobsView.style.display = 'block'; loadMyJobs(); }
             if (view === 'myResponses') { myResponsesView.style.display = 'block'; loadMyResponses(); }
             if (view === 'executorChat' && executorChatView) executorChatView.style.display = 'block';
-            if (view === 'executorChat') startExecutorChatPolling();
-            if (view !== 'executorChat') stopExecutorChatPolling();
             if (view === 'profile' && profileViewElem) profileViewElem.style.display = 'block';
             document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
             const activeBtn = document.querySelector(`.nav-item[data-view="${view}"]`);
@@ -634,19 +642,19 @@
         }
 
         async function register() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const role = document.getElementById('role').value;
-    const city = document.getElementById('city').value.trim();
-    const phone = document.getElementById('phone').value.trim();
-    const res = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role, city, phone })
-    });
-    if (res.ok) showAuthError('✅ Регистрация успешна, войдите');
-    else { const err = await res.json(); showAuthError(err.error); }
-}
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            const city = document.getElementById('city').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password, role, city, phone })
+            });
+            if (res.ok) showAuthError('✅ Регистрация успешна, войдите');
+            else { const err = await res.json(); showAuthError(err.error); }
+        }
 
         async function login() {
             if (await checkIfBanned()) return;
@@ -674,6 +682,7 @@
                     document.getElementById('profileEmail').innerText = user.email;
                     document.getElementById('profileRole').innerText = (user.role === 'candidate' ? 'Кандидат' : (user.role === 'employer' ? 'Работодатель' : 'Админ'));
                     document.getElementById('profileCity').innerText = user.city || 'не указан';
+                    document.getElementById('profilePhone').innerText = user.phone || 'не указан';
                 }
                 if (user.role === 'admin') {
                     const adminLink = document.createElement('div');
@@ -707,11 +716,11 @@
                 .then(res => res.ok ? res.json() : Promise.reject())
                 .then(userData => {
                     user = userData;
-                    // Заполнение профиля
                     if (document.getElementById('profileEmail')) {
                         document.getElementById('profileEmail').innerText = user.email;
                         document.getElementById('profileRole').innerText = (user.role === 'candidate' ? 'Кандидат' : (user.role === 'employer' ? 'Работодатель' : 'Админ'));
                         document.getElementById('profileCity').innerText = user.city || 'не указан';
+                        document.getElementById('profilePhone').innerText = user.phone || 'не указан';
                     }
                     authBlock.style.display = 'none';
                     mainApp.style.display = 'block';
@@ -731,7 +740,7 @@
             bottomNav.style.display = 'none';
         }
 
-        // Чат по заявке
+        // ========== ЧАТ ПО ЗАЯВКЕ ==========
         let currentChatJobId = null;
         let chatInterval = null;
 
@@ -808,6 +817,75 @@
             }
         }
 
+        // ========== ОБЩИЙ ЧАТ ИСПОЛНИТЕЛЕЙ ==========
+        let executorChatInterval = null;
+
+        async function loadExecutorChatMessages() {
+            try {
+                const res = await fetch('/api/general-chat/messages', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Ошибка загрузки');
+                const messages = await res.json();
+                const container = document.getElementById('executorChatMessages');
+                if (!container) return;
+                container.innerHTML = '';
+                for (let msg of messages) {
+                    const div = document.createElement('div');
+                    div.className = 'message';
+                    div.innerHTML = `<strong>Пользователь ${msg.userId}:</strong> ${escapeHtml(msg.message)}<br><small>${new Date(msg.createdAt).toLocaleString()}</small>`;
+                    container.appendChild(div);
+                }
+                container.scrollTop = container.scrollHeight;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function sendExecutorChatMessage() {
+            const input = document.getElementById('executorChatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            try {
+                const res = await fetch('/api/general-chat/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ message })
+                });
+                if (res.ok) {
+                    input.value = '';
+                    await loadExecutorChatMessages();
+                } else {
+                    const err = await res.json();
+                    showNotification(err.error || 'Ошибка отправки', 'error');
+                }
+            } catch (err) {
+                showNotification('Ошибка сети', 'error');
+            }
+        }
+
+        function startExecutorChatPolling() {
+            if (executorChatInterval) clearInterval(executorChatInterval);
+            loadExecutorChatMessages();
+            executorChatInterval = setInterval(loadExecutorChatMessages, 3000);
+        }
+
+        function stopExecutorChatPolling() {
+            if (executorChatInterval) {
+                clearInterval(executorChatInterval);
+                executorChatInterval = null;
+            }
+        }
+
+        // Модифицируем switchView для управления опросом чата исполнителей
+        const originalSwitchView = switchView;
+        window.switchView = function(view) {
+            if (view !== 'executorChat') stopExecutorChatPolling();
+            originalSwitchView(view);
+            if (view === 'executorChat') startExecutorChatPolling();
+        };
+        switchView = window.switchView;
+
         async function checkIfBanned() {
             if (!user) return false;
             try {
@@ -845,7 +923,14 @@
             setTimeout(() => notif.remove(), 3000);
         }
 
-        // Обработчики кнопок и окон
+        // Инициализация обработчиков нижнего меню (кликабельность)
+        document.querySelectorAll('.nav-item').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.getAttribute('data-view');
+                if (view) switchView(view);
+            });
+        });
+
         window.register = register;
         window.login = login;
         window.logout = logout;
@@ -853,7 +938,6 @@
         window.respondToJob = respondToJob;
         window.assignJob = assignJob;
         window.deleteJob = deleteJob;
-        window.switchView = switchView;
         window.openChat = openChat;
         window.closeChat = closeChat;
         window.simulatePayment = simulatePayment;
@@ -861,6 +945,10 @@
         document.getElementById('closeChat')?.addEventListener('click', closeChat);
         document.getElementById('sendMessageBtn')?.addEventListener('click', sendChatMessage);
         document.getElementById('logoutBtnFromProfile')?.addEventListener('click', () => logout());
+        document.getElementById('sendExecutorChatBtn')?.addEventListener('click', sendExecutorChatMessage);
+        document.getElementById('executorChatInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendExecutorChatMessage();
+        });
 
         window.onclick = function(event) {
             const modal = document.getElementById('chatModal');
@@ -911,70 +999,6 @@
                 });
             });
         }
-        // ========== ОБЩИЙ ЧАТ ИСПОЛНИТЕЛЕЙ ==========
-let executorChatInterval = null;
-
-async function loadExecutorChatMessages() {
-    try {
-        const res = await fetch('/api/general-chat/messages', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Ошибка загрузки');
-        const messages = await res.json();
-        const container = document.getElementById('executorChatMessages');
-        if (!container) return;
-        container.innerHTML = '';
-        for (let msg of messages) {
-            const div = document.createElement('div');
-            div.className = 'message';
-            // Получаем имя пользователя по userId (можно упростить: показывать id)
-            div.innerHTML = `<strong>Пользователь ${msg.userId}:</strong> ${escapeHtml(msg.message)}<br><small>${new Date(msg.createdAt).toLocaleString()}</small>`;
-            container.appendChild(div);
-        }
-        container.scrollTop = container.scrollHeight;
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-async function sendExecutorChatMessage() {
-    const input = document.getElementById('executorChatInput');
-    const message = input.value.trim();
-    if (!message) return;
-    try {
-        const res = await fetch('/api/general-chat/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ message })
-        });
-        if (res.ok) {
-            input.value = '';
-            await loadExecutorChatMessages();
-        } else {
-            const err = await res.json();
-            showNotification(err.error || 'Ошибка отправки', 'error');
-        }
-    } catch (err) {
-        showNotification('Ошибка сети', 'error');
-    }
-}
-
-function startExecutorChatPolling() {
-    if (executorChatInterval) clearInterval(executorChatInterval);
-    loadExecutorChatMessages();
-    executorChatInterval = setInterval(loadExecutorChatMessages, 3000);
-}
-
-function stopExecutorChatPolling() {
-    if (executorChatInterval) {
-        clearInterval(executorChatInterval);
-        executorChatInterval = null;
-    }
-}
-document.getElementById('sendExecutorChatBtn')?.addEventListener('click', sendExecutorChatMessage);
-document.getElementById('executorChatInput')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendExecutorChatMessage();
-});
     </script>
 </body>
 </html>
