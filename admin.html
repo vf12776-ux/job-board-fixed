@@ -3,121 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Админ-панель</title>
-    <link rel="icon" type="image/png" href="/icon-192.png">
+    <title>Админ-панель - Доска заявок</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; transition: 0.2s; }
-        body { font-family: system-ui; background: var(--bg-body); color: var(--text-primary); padding: 20px; }
-        :root { --bg-body: #f3f4f6; --bg-card: #fff; --text-primary: #111; --border: #e5e7eb; --btn-primary: #3b82f6; --btn-danger: #ef4444; }
-        body.dark { --bg-body: #1f2937; --bg-card: #374151; --text-primary: #f9fafb; --border: #4b5563; }
-        .card { background: var(--bg-card); border-radius: 24px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
-        .theme-toggle { position: fixed; top: 20px; right: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 40px; padding: 8px 12px; cursor: pointer; }
-        button { background: var(--btn-primary); color: white; border: none; padding: 6px 12px; border-radius: 40px; cursor: pointer; margin: 2px; }
-        .ban-btn { background: var(--btn-danger); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th { background: #f9fafb; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin-right: 8px;
+        }
+        button.danger { background: #ef4444; }
+        button.warning { background: #f59e0b; }
+        input, select {
+            padding: 6px 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 16px;
+        }
+        .status-banned { color: #ef4444; font-weight: bold; }
+        .status-active { color: #10b981; font-weight: bold; }
+        .reason-input { width: 150px; margin-right: 5px; }
+        .error { color: red; margin-top: 10px; }
+        .success { color: green; margin-top: 10px; }
     </style>
 </head>
-<body class="light">
-    <div class="theme-toggle" id="themeToggle">🌙 Тема</div>
+<body>
+<div class="container">
     <div class="card">
-        <h1>Админ-панель</h1>
-        <h2>Пользователи</h2>
-        <table id="usersTable"><thead><tr><th>ID</th><th>Email</th><th>Роль</th><th>Город</th><th>Действие</th></tr></thead><tbody></tbody></table>
-        <h2>Чёрный список</h2>
-        <table id="blacklistTable"><thead><tr><th>ID пользователя</th><th>Email</th><th>Причина</th><th>Дата бана</th><th>Действие</th></tr></thead><tbody></tbody></table>
+        <h1>🛠️ Админ-панель</h1>
+        <p>Управление пользователями и черным списком</p>
+        <hr style="margin: 16px 0;">
+        <div id="statusMsg"></div>
+        <div style="overflow-x: auto;">
+            <table id="usersTable">
+                <thead>
+                    <tr><th>ID</th><th>Email</th><th>Роль</th><th>Город</th><th>Телефон</th><th>Статус</th><th>Действия</th></tr>
+                </thead>
+                <tbody id="usersList"></tbody>
+            </table>
+        </div>
     </div>
-    <script>
-        const themeToggle = document.getElementById('themeToggle');
-        if (localStorage.getItem('theme') === 'dark') { document.body.classList.add('dark'); themeToggle.innerText = '☀️ Тема'; }
-        themeToggle.onclick = () => {
-            document.body.classList.toggle('dark');
-            localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-            themeToggle.innerText = document.body.classList.contains('dark') ? '☀️ Тема' : '🌙 Тема';
-        };
-        const token = localStorage.getItem('token');
-        if (!token) { alert('Нет доступа'); location.href = '/'; }
+</div>
 
-        async function loadUsers() {
-            const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
-            const users = await res.json();
-            const blacklistRes = await fetch('/api/blacklist', { headers: { 'Authorization': `Bearer ${token}` } });
-            const blacklist = await blacklistRes.json();
-            const bannedIds = blacklist.map(b => b.userId);
-            const tbody = document.querySelector('#usersTable tbody');
+<script>
+    const API_BASE = ''; // относительные пути
+    let token = null;
+
+    // Получаем токен из localStorage (если админ уже авторизован на основном сайте)
+    token = localStorage.getItem('token');
+    if (!token) {
+        // Если нет токена, пробуем получить через редирект или запрос
+        document.getElementById('statusMsg').innerHTML = '<div class="error">❌ Вы не авторизованы. <a href="/">Вернуться на главную</a> и войдите как admin.</div>';
+    }
+
+    async function fetchAPI(url, options = {}) {
+        const res = await fetch(url, {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                ...options.headers
+            }
+        });
+        if (res.status === 401) {
+            document.getElementById('statusMsg').innerHTML = '<div class="error">Сессия истекла. <a href="/">Войдите заново</a></div>';
+            throw new Error('Unauthorized');
+        }
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Ошибка');
+        }
+        return res.json();
+    }
+
+    async function loadUsers() {
+        try {
+            const users = await fetchAPI('/api/users');
+            const blacklist = await fetchAPI('/api/blacklist');
+            const bannedIds = new Set(blacklist.map(b => b.userId));
+            const tbody = document.getElementById('usersList');
             tbody.innerHTML = '';
-            for (let u of users) {
+            for (let user of users) {
+                const isBanned = bannedIds.has(user.id);
                 const row = tbody.insertRow();
-                row.insertCell(0).innerText = u.id;
-                row.insertCell(1).innerText = u.email;
-                const roleCell = row.insertCell(2);
-                const select = document.createElement('select');
-                ['candidate','employer','admin'].forEach(r => {
-                    const opt = document.createElement('option');
-                    opt.value = r;
-                    opt.innerText = r;
-                    if (u.role === r) opt.selected = true;
-                    select.appendChild(opt);
-                });
-                select.onchange = () => updateRole(u.id, select.value);
-                roleCell.appendChild(select);
-                row.insertCell(3).innerText = u.city || '-';
-                const actionCell = row.insertCell(4);
-                if (bannedIds.includes(u.id)) {
-                    const unbanBtn = document.createElement('button');
-                    unbanBtn.innerText = 'Разбанить';
-                    unbanBtn.onclick = () => unbanUser(u.id);
-                    actionCell.appendChild(unbanBtn);
+                row.insertCell(0).innerText = user.id;
+                row.insertCell(1).innerText = user.email;
+                row.insertCell(2).innerText = user.role === 'candidate' ? 'Кандидат' : (user.role === 'employer' ? 'Работодатель' : 'Админ');
+                row.insertCell(3).innerText = user.city || '-';
+                row.insertCell(4).innerText = user.phone || '-';
+                const statusCell = row.insertCell(5);
+                statusCell.innerHTML = isBanned ? '<span class="status-banned">🔴 Забанен</span>' : '<span class="status-active">🟢 Активен</span>';
+                const actionsCell = row.insertCell(6);
+                if (user.role !== 'admin') {
+                    if (isBanned) {
+                        const unbanBtn = document.createElement('button');
+                        unbanBtn.innerText = 'Разбанить';
+                        unbanBtn.classList.add('warning');
+                        unbanBtn.onclick = () => unbanUser(user.id);
+                        actionsCell.appendChild(unbanBtn);
+                    } else {
+                        const banBtn = document.createElement('button');
+                        banBtn.innerText = 'Забанить';
+                        banBtn.classList.add('danger');
+                        banBtn.onclick = () => {
+                            const reason = prompt('Причина бана (необязательно):');
+                            banUser(user.id, reason || 'Нарушение правил');
+                        };
+                        actionsCell.appendChild(banBtn);
+                    }
                 } else {
-                    const banBtn = document.createElement('button');
-                    banBtn.innerText = 'Забанить';
-                    banBtn.classList.add('ban-btn');
-                    banBtn.onclick = () => banUser(u.id);
-                    actionCell.appendChild(banBtn);
+                    actionsCell.innerText = '—';
                 }
             }
+        } catch (err) {
+            console.error(err);
+            document.getElementById('statusMsg').innerHTML = `<div class="error">❌ ${err.message}</div>`;
         }
+    }
 
-        async function updateRole(userId, newRole) {
-            await fetch(`/api/users/${userId}/role`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ role: newRole }) });
-            alert('Роль обновлена');
+    async function banUser(userId, reason) {
+        try {
+            await fetchAPI('/api/blacklist', {
+                method: 'POST',
+                body: JSON.stringify({ userId, reason })
+            });
+            document.getElementById('statusMsg').innerHTML = '<div class="success">✅ Пользователь забанен</div>';
+            loadUsers();
+        } catch (err) {
+            document.getElementById('statusMsg').innerHTML = `<div class="error">❌ ${err.message}</div>`;
         }
+    }
 
-        async function banUser(userId) {
-            const reason = prompt('Причина бана:');
-            if (!reason) return;
-            const res = await fetch('/api/blacklist', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ userId, reason }) });
-            if (res.ok) { alert('Пользователь забанен'); loadUsers(); loadBlacklist(); }
-            else alert('Ошибка');
+    async function unbanUser(userId) {
+        try {
+            await fetchAPI(`/api/blacklist/${userId}`, { method: 'DELETE' });
+            document.getElementById('statusMsg').innerHTML = '<div class="success">✅ Пользователь разбанен</div>';
+            loadUsers();
+        } catch (err) {
+            document.getElementById('statusMsg').innerHTML = `<div class="error">❌ ${err.message}</div>`;
         }
+    }
 
-        async function unbanUser(userId) {
-            const res = await fetch(`/api/blacklist/${userId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-            if (res.ok) { alert('Пользователь разбанен'); loadUsers(); loadBlacklist(); }
-            else alert('Ошибка');
-        }
-
-        async function loadBlacklist() {
-            const res = await fetch('/api/blacklist', { headers: { 'Authorization': `Bearer ${token}` } });
-            const blacklist = await res.json();
-            const tbody = document.querySelector('#blacklistTable tbody');
-            tbody.innerHTML = '';
-            for (let b of blacklist) {
-                const row = tbody.insertRow();
-                row.insertCell(0).innerText = b.userId;
-                row.insertCell(1).innerText = b.email;
-                row.insertCell(2).innerText = b.reason;
-                row.insertCell(3).innerText = new Date(b.bannedAt).toLocaleString();
-                const actionCell = row.insertCell(4);
-                const unbanBtn = document.createElement('button');
-                unbanBtn.innerText = 'Разбанить';
-                unbanBtn.onclick = () => unbanUser(b.userId);
-                actionCell.appendChild(unbanBtn);
-            }
-        }
-
+    if (token) {
         loadUsers();
-        loadBlacklist();
-    </script>
+    }
+</script>
 </body>
 </html>
