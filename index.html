@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Доска заявок</title>
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/icon-192.png">
@@ -135,55 +135,54 @@
             flex-wrap: wrap;
         }
         .filter-bar select { flex: 1; margin: 0; }
-        /* Модальное окно чата */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.5);
-}
-.modal-content {
-  background-color: var(--bg-card);
-  margin: 15% auto;
-  padding: 20px;
-  border-radius: 24px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 70%;
-  display: flex;
-  flex-direction: column;
-}
-.close {
-  color: var(--text-secondary);
-  float: right;
-  font-size: 28px;
-  cursor: pointer;
-}
-#chatMessages {
-  flex-grow: 1;
-  overflow-y: auto;
-  margin-bottom: 10px;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  min-height: 200px;
-}
-.message {
-  margin-bottom: 8px;
-  padding: 6px 10px;
-  border-radius: 16px;
-  background: var(--input-bg);
-}
-.message strong { color: var(--btn-primary); }
-#chatInput {
-  width: calc(100% - 70px);
-  display: inline-block;
-  margin-right: 8px;
-}
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: var(--bg-card);
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 70%;
+            display: flex;
+            flex-direction: column;
+        }
+        .close {
+            color: var(--text-secondary);
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+        }
+        #chatMessages {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            min-height: 200px;
+        }
+        .message {
+            margin-bottom: 8px;
+            padding: 6px 10px;
+            border-radius: 16px;
+            background: var(--input-bg);
+        }
+        .message strong { color: var(--btn-primary); }
+        #chatInput {
+            width: calc(100% - 70px);
+            display: inline-block;
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body class="light">
@@ -191,25 +190,26 @@
     <div class="container" id="app">
         <!-- Блок для неавторизованных -->
         <div id="authBlock" class="card">
-            <h1>📋 Доска заявок</h1>
-            <h2>Вход / Регистрация</h2>
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Пароль">
-            <select id="role">
-                <option value="candidate">👤 Кандидат</option>
-                <option value="employer">🏢 Работодатель</option>
-            </select>
-            <input type="text" id="city" placeholder="Город (например, Москва)">
-            <div>
-                <button onclick="register()">Регистрация</button>
-                <button onclick="login()">Вход</button>
-            </div>
-            <div id="authError" class="error"></div>
-        </div>
+    <h1>📋 Доска заявок</h1>
+    <h2>Вход / Регистрация</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Пароль">
+    <select id="role">
+        <option value="candidate">👤 Кандидат</option>
+        <option value="employer">🏢 Работодатель</option>
+    </select>
+    <input type="text" id="city" placeholder="Город (например, Москва)">
+    <input type="tel" id="phone" placeholder="Телефон (например, +7 123 456-78-90)">
+    <div>
+        <button onclick="register()">Регистрация</button>
+        <button onclick="login()">Вход</button>
+    </div>
+    <div id="authError" class="error"></div>
+</div>
 
         <!-- Блок для авторизованных -->
         <div id="mainApp" style="display: none;">
-            <!-- Карточка пользователя -->
+            <!-- Карточка пользователя (краткая) -->
             <div class="card" style="margin-bottom: 10px;">
                 <p>✅ Вы вошли как <strong id="userRoleDisplay"></strong> (город: <span id="userCityDisplay"></span>)</p>
                 <button onclick="logout()" class="secondary-btn" style="background: var(--btn-secondary);">Выйти</button>
@@ -229,7 +229,7 @@
                 </div>
             </div>
 
-            <!-- Мои заявки (только для работодателя/админа) -->
+            <!-- Мои заявки -->
             <div id="myJobsView" style="display: none;">
                 <div class="card">
                     <h2>📝 Мои заявки</h2>
@@ -237,7 +237,7 @@
                 </div>
             </div>
 
-            <!-- Мои отклики (для кандидата) -->
+            <!-- Мои отклики -->
             <div id="myResponsesView" style="display: none;">
                 <div class="card">
                     <h2>💬 Мои отклики</h2>
@@ -245,31 +245,71 @@
                 </div>
             </div>
 
-            <!-- Форма создания заявки (только для employer/admin) -->
+            <!-- Общий чат исполнителей -->
+            <div id="executorChatView" style="display: none;">
+                <div class="card">
+                    <h2>👥 Общий чат исполнителей</h2>
+                    <div id="executorChatMessages" style="height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 16px; padding: 10px; margin-bottom: 10px;"></div>
+                    <input type="text" id="executorChatInput" placeholder="Сообщение для всех исполнителей...">
+                    <button id="sendExecutorChatBtn">📤 Отправить</button>
+                </div>
+            </div>
+
+            <!-- Профиль -->
+            <div id="profileView" style="display: none;">
+                <div class="card">
+                    <h2>👤 Профиль</h2>
+                    <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+                    <p><strong>Роль:</strong> <span id="profileRole"></span></p>
+                    <p><strong>Город:</strong> <span id="profileCity"></span></p>
+                    <p><strong>Телефон:</strong> <span id="profilePhone"></span></p>
+                    <button id="logoutBtnFromProfile">Выйти</button>
+                </div>
+            </div>
+
+            <!-- Форма создания заявки -->
             <div id="createJobForm" class="card" style="display: none;">
-    <h3>➕ Новая заявка</h3>
-    <input type="text" id="jobTitle" placeholder="Название услуги">
-    <textarea id="jobDesc" rows="3" placeholder="Описание"></textarea>
-    <select id="jobCategory">
-        <option value="repair">🔧 Ремонт</option>
-        <option value="cleaning">🧹 Уборка</option>
-        <option value="delivery">🚚 Доставка</option>
-        <option value="it">💻 IT-помощь</option>
-        <option value="other">📦 Другое</option>
-    </select>
-    <input type="text" id="jobCity" placeholder="Город выполнения">
-    <input type="number" id="jobPrice" placeholder="Цена (руб)" min="0" step="1">
-    <button onclick="createJob()">Опубликовать</button>
-</div>
+                <h3>➕ Новая заявка</h3>
+                <input type="text" id="jobTitle" placeholder="Название услуги">
+                <textarea id="jobDesc" rows="3" placeholder="Описание"></textarea>
+                <select id="jobCategory">
+                    <option value="repair">🔧 Ремонт</option>
+                    <option value="cleaning">🧹 Уборка</option>
+                    <option value="delivery">🚚 Доставка</option>
+                    <option value="it">💻 IT-помощь</option>
+                    <option value="other">📦 Другое</option>
+                </select>
+                <input type="text" id="jobCity" placeholder="Город выполнения">
+                <input type="number" id="jobPrice" placeholder="Цена (руб)" min="0" step="1">
+                <button onclick="createJob()">Опубликовать</button>
+            </div>
         </div>
     </div>
 
-    <!-- Нижнее меню -->
+    <!-- Нижнее меню (5 кнопок) -->
     <div class="bottom-nav" id="bottomNav" style="display: none;">
         <button class="nav-item" data-view="feed">📰 Лента</button>
         <button class="nav-item" data-view="myJobs" id="myJobsNavBtn">📋 Мои заявки</button>
         <button class="nav-item" data-view="myResponses" id="myResponsesNavBtn">💬 Отклики</button>
+        <button class="nav-item" data-view="executorChat">💬 Чат исполнителей</button>
+        <button class="nav-item" data-view="profile">👤 Профиль</button>
     </div>
+
+    <!-- Модальное окно чата по заявке -->
+    <div id="chatModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeChat()">&times;</span>
+            <h3>💬 Чат по заявке</h3>
+            <div id="chatMessages"></div>
+            <input type="text" id="chatInput" placeholder="Введите сообщение...">
+            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button id="sendMessageBtn" style="flex: 2;">📤 Отправить</button>
+                <button onclick="closeChat()" style="flex: 1; background: #6b7280;">✖ Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="installButton" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; display: none;">📱 Установить приложение</button>
 
     <script>
         // ========== ТЕМА ==========
@@ -307,35 +347,26 @@
         const myResponsesView = document.getElementById('myResponsesView');
         const createJobForm = document.getElementById('createJobForm');
 
-        // Функция обновления UI в зависимости от роли
         function updateUIForRole() {
             if (!user) return;
             const isCandidate = (user.role === 'candidate');
             const isEmployerOrAdmin = (user.role === 'employer' || user.role === 'admin');
-            
-            // Форма создания заявки
             createJobForm.style.display = isEmployerOrAdmin ? 'block' : 'none';
-            
-            // Кнопки нижнего меню
             const myJobsBtn = document.getElementById('myJobsNavBtn');
             const myResponsesBtn = document.getElementById('myResponsesNavBtn');
             if (isCandidate) {
                 myJobsBtn.style.display = 'none';
                 myResponsesBtn.style.display = 'flex';
-                // Если текущий активный вид — myJobs, переключаем на feed
                 if (myJobsView.style.display !== 'none') switchView('feed');
             } else {
                 myJobsBtn.style.display = 'flex';
                 myResponsesBtn.style.display = 'none';
                 if (myResponsesView.style.display !== 'none') switchView('feed');
             }
-            
-            // Отображаем роль и город
             document.getElementById('userRoleDisplay').innerText = isCandidate ? 'Кандидат' : (user.role === 'employer' ? 'Работодатель' : 'Администратор');
             document.getElementById('userCityDisplay').innerText = user.city || 'не указан';
         }
 
-        // Загрузка городов для фильтра
         async function loadCityFilter() {
             const res = await fetch('/api/jobs');
             const jobs = await res.json();
@@ -351,127 +382,121 @@
             select.onchange = () => loadJobs();
         }
 
-        // Загрузка ленты
-async function loadJobs() {
-    const cityFilter = document.getElementById('cityFilter').value;
-    let url = '/api/jobs';
-    if (cityFilter && cityFilter !== 'all') url += `?city=${encodeURIComponent(cityFilter)}`;
-    const res = await fetch(url);
-    const jobs = await res.json();
-    const container = document.getElementById('jobsList');
-    container.innerHTML = '';
-    if (jobs.length === 0) { container.innerHTML = '<p>Нет заявок</p>'; return; }
-    for (let job of jobs) {
-        const div = document.createElement('div');
-        div.className = 'job';
-        const categoryNames = { repair: '🔧 Ремонт', cleaning: '🧹 Уборка', delivery: '🚚 Доставка', it: '💻 IT', other: '📦 Другое' };
-        const categoryText = categoryNames[job.category] || job.category;
-        div.innerHTML = `
-            <strong>${escapeHtml(job.title)}</strong>
-            <div class="job-meta">
-                <span>📂 ${categoryText}</span>
-                <span>📍 ${job.city || 'Не указан'}</span>
-                <span>📅 ${new Date(job.createdAt).toLocaleString()}</span>
-                <span>🏷️ Статус: ${job.status || 'open'}</span>
-            </div>
-            <p>${escapeHtml(job.description)}</p>
-        `;
-        
-        // ОТОБРАЖЕНИЕ ЦЕНЫ И СТАТУСА ОПЛАТЫ
-        const priceDiv = document.createElement('div');
-        priceDiv.className = 'job-meta';
-        priceDiv.innerHTML = `💰 Цена: ${job.price || 0} руб. | Оплата: ${job.paymentStatus === 'pending' ? '⏳ Ожидает' : (job.paymentStatus === 'paid' ? '✅ Оплачено' : '💸 Выплачено')}`;
-        div.appendChild(priceDiv);
-        
-        // Кнопка "Откликнуться" для кандидатов
-        if (user && user.role === 'candidate' && (job.status === 'open' || !job.status)) {
-            const respondBtn = document.createElement('button');
-            respondBtn.innerText = '📞 Откликнуться';
-            respondBtn.onclick = () => respondToJob(job.id);
-            div.appendChild(respondBtn);
+        async function loadJobs() {
+            const cityFilter = document.getElementById('cityFilter').value;
+            let url = '/api/jobs';
+            if (cityFilter && cityFilter !== 'all') url += `?city=${encodeURIComponent(cityFilter)}`;
+            const res = await fetch(url);
+            const jobs = await res.json();
+            const container = document.getElementById('jobsList');
+            container.innerHTML = '';
+            if (jobs.length === 0) { container.innerHTML = '<p>Нет заявок</p>'; return; }
+            for (let job of jobs) {
+                const div = document.createElement('div');
+                div.className = 'job';
+                const categoryNames = { repair: '🔧 Ремонт', cleaning: '🧹 Уборка', delivery: '🚚 Доставка', it: '💻 IT', other: '📦 Другое' };
+                const categoryText = categoryNames[job.category] || job.category;
+                div.innerHTML = `
+                    <strong>${escapeHtml(job.title)}</strong>
+                    <div class="job-meta">
+                        <span>📂 ${categoryText}</span>
+                        <span>📍 ${job.city || 'Не указан'}</span>
+                        <span>📅 ${new Date(job.createdAt).toLocaleString()}</span>
+                        <span>🏷️ Статус: ${job.status || 'open'}</span>
+                    </div>
+                    <p>${escapeHtml(job.description)}</p>
+                `;
+                const priceDiv = document.createElement('div');
+                priceDiv.className = 'job-meta';
+                priceDiv.innerHTML = `💰 Цена: ${job.price || 0} руб. | Оплата: ${job.paymentStatus === 'pending' ? '⏳ Ожидает' : (job.paymentStatus === 'paid' ? '✅ Оплачено' : '💸 Выплачено')}`;
+                div.appendChild(priceDiv);
+                
+                if (user && user.role === 'candidate' && (job.status === 'open' || !job.status)) {
+                    const respondBtn = document.createElement('button');
+                    respondBtn.innerText = '📞 Откликнуться';
+                    respondBtn.onclick = () => respondToJob(job.id);
+                    div.appendChild(respondBtn);
+                }
+                if (user && user.id === job.employerId && job.paymentStatus === 'pending' && job.price > 0) {
+                    const payBtn = document.createElement('button');
+                    payBtn.innerText = '💳 Оплатить (симуляция)';
+                    payBtn.style.background = 'var(--btn-success)';
+                    payBtn.onclick = () => simulatePayment(job.id);
+                    div.appendChild(payBtn);
+                }
+                if (job.status === 'taken' && user && (user.id === job.employerId || user.id === job.assignedTo)) {
+                    const chatBtn = document.createElement('button');
+                    chatBtn.innerText = '💬 Чат';
+                    chatBtn.onclick = () => openChat(job.id);
+                    div.appendChild(chatBtn);
+                }
+                if (user && (user.role === 'employer' || user.role === 'admin')) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.innerText = '❌ Удалить';
+                    deleteBtn.classList.add('danger-btn');
+                    deleteBtn.onclick = () => deleteJob(job.id);
+                    div.appendChild(deleteBtn);
+                }
+                container.appendChild(div);
+            }
         }
-        
-        // Кнопка "Оплатить" (только для заказчика, если статус pending)
-        if (user && user.id === job.employerId && job.paymentStatus === 'pending' && job.price > 0) {
-            const payBtn = document.createElement('button');
-            payBtn.innerText = '💳 Оплатить (симуляция)';
-            payBtn.style.background = 'var(--btn-success)';
-            payBtn.onclick = () => simulatePayment(job.id);
-            div.appendChild(payBtn);
-        }
-        
-        // Кнопка "Чат" для взятых заявок
-        if (job.status === 'taken' && user && (user.id === job.employerId || user.id === job.assignedTo)) {
-            const chatBtn = document.createElement('button');
-            chatBtn.innerText = '💬 Чат';
-            chatBtn.onclick = () => openChat(job.id);
-            div.appendChild(chatBtn);
-        }
-        
-        // Кнопка удаления для работодателя/админа
-        if (user && (user.role === 'employer' || user.role === 'admin')) {
-            const deleteBtn = document.createElement('button');
-            deleteBtn.innerText = '❌ Удалить';
-            deleteBtn.classList.add('danger-btn');
-            deleteBtn.onclick = () => deleteJob(job.id);
-            div.appendChild(deleteBtn);
-        }
-        container.appendChild(div);
-    }
-}
+
         async function respondToJob(jobId) {
             if (await checkIfBanned()) return;
-    try {
-        const res = await fetch('/api/responses', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ jobId })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            if (data.autoAssigned) {
-                showNotification('✅ Вы первый откликнулись! Заявка ваша, чат открыт.', 'success');
-            } else {
-                showNotification('✅ Отклик отправлен, но заявка уже взята в работу.', 'info');
+            try {
+                const res = await fetch('/api/responses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ jobId })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    if (data.autoAssigned) {
+                        showNotification('✅ ' + (data.message || 'Вы первый откликнулись! Заявка ваша.'), 'success');
+                    } else {
+                        showNotification('📝 ' + (data.message || 'Отклик отправлен, заявка уже в работе.'), 'info');
+                    }
+                    loadJobs();
+                    if (user.role === 'candidate') loadMyResponses();
+                    if (myJobsView.style.display !== 'none') loadMyJobs();
+                } else {
+                    showNotification(data.error || 'Ошибка при отклике', 'error');
+                }
+            } catch (err) {
+                showNotification('Ошибка сети: ' + err.message, 'error');
             }
-            loadJobs();
-            if (user.role === 'candidate') loadMyResponses();
-        } else {
-            showNotification(data.error || 'Ошибка при отклике', 'error');
         }
-    } catch (err) {
-        showNotification('Ошибка сети: ' + err.message, 'error');
-    }
-}
+
+        async function simulatePayment(jobId) {
+            const res = await fetch(`/api/pay/${jobId}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showNotification(data.message, 'success');
+                loadJobs();
+                if (window.loadMyJobs) loadMyJobs();
+            } else {
+                showNotification(data.error || 'Ошибка оплаты', 'error');
+            }
+        }
+
         async function assignJob(jobId, candidateId) {
-    const res = await fetch(`/api/jobs/${jobId}/assign`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ candidateId })
-    });
-    if (res.ok) {
-        showNotification('Исполнитель назначен, заявка закрыта для новых откликов', 'success');
-        loadMyJobs();
-        loadJobs(); // обновляем ленту, чтобы кнопка отклика исчезла
-    } else {
-        const err = await res.json();
-        showNotification(err.error, 'error');
-    }
-}
-async function simulatePayment(jobId) {
-    const res = await fetch(`/api/pay/${jobId}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const data = await res.json();
-    if (res.ok) {
-        showNotification(data.message, 'success');
-        loadJobs();  // обновляем ленту
-        if (window.loadMyJobs) loadMyJobs();
-    } else {
-        showNotification(data.error || 'Ошибка оплаты', 'error');
-    }
-}
+            const res = await fetch(`/api/jobs/${jobId}/assign`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ candidateId })
+            });
+            if (res.ok) {
+                showNotification('Исполнитель назначен, заявка закрыта для новых откликов', 'success');
+                loadMyJobs();
+                loadJobs();
+            } else {
+                const err = await res.json();
+                showNotification(err.error, 'error');
+            }
+        }
 
         async function deleteJob(jobId) {
             if (!confirm('Удалить заявку?')) return;
@@ -483,123 +508,124 @@ async function simulatePayment(jobId) {
         }
 
         async function loadMyJobs() {
-    const res = await fetch('/api/my-jobs', { headers: { 'Authorization': `Bearer ${token}` } });
-    const jobs = await res.json();
-    const container = document.getElementById('myJobsList');
-    container.innerHTML = '';
-    if (jobs.length === 0) { container.innerHTML = '<p>Вы ещё не создали заявок</p>'; return; }
-    
-    for (let job of jobs) {
-        const jobDiv = document.createElement('div');
-        jobDiv.className = 'job';
-        jobDiv.innerHTML = `
-            <strong>${escapeHtml(job.title)}</strong><br>
-            ${escapeHtml(job.description)}<br>
-            <small>📍 ${job.city || 'Город не указан'} | Статус: ${job.status === 'open' ? '🔓 Открыта' : (job.status === 'taken' ? '🔨 В работе' : '✅ Завершена')}</small>
-        `;
-        
-        // Кнопка чата, если заявка взята в работу
-        if (job.status === 'taken' && user && (user.id === job.employerId || user.id === job.assignedTo)) {
-            const chatBtn = document.createElement('button');
-            chatBtn.innerText = '💬 Чат';
-            chatBtn.onclick = () => openChat(job.id);
-            jobDiv.appendChild(chatBtn);
-        }
-        
-        // Загружаем отклики для этой заявки
-        const responsesRes = await fetch(`/api/responses/by-job/${job.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
-        if (responsesRes.ok) {
-            const responses = await responsesRes.json();
-            if (responses.length > 0) {
-                const responsesDiv = document.createElement('div');
-                responsesDiv.style.marginTop = '12px';
-                responsesDiv.style.padding = '8px';
-                responsesDiv.style.borderTop = '1px solid var(--border)';
-                responsesDiv.innerHTML = '<strong>📞 Отклики:</strong><br>';
-                for (let r of responses) {
-                    responsesDiv.innerHTML += `
-                        <div style="margin: 6px 0; display: flex; justify-content: space-between; align-items: center;">
-                            <span>👤 ${escapeHtml(r.candidateEmail)} (${new Date(r.createdAt).toLocaleString()})</span>
-                            ${job.status === 'open' ? `<button onclick="assignJob(${job.id}, ${r.candidateId})">Назначить</button>` : ''}
-                        </div>
-                    `;
+            const res = await fetch('/api/my-jobs', { headers: { 'Authorization': `Bearer ${token}` } });
+            const jobs = await res.json();
+            const container = document.getElementById('myJobsList');
+            container.innerHTML = '';
+            if (jobs.length === 0) { container.innerHTML = '<p>Вы ещё не создали заявок</p>'; return; }
+            for (let job of jobs) {
+                const jobDiv = document.createElement('div');
+                jobDiv.className = 'job';
+                jobDiv.innerHTML = `
+                    <strong>${escapeHtml(job.title)}</strong><br>
+                    ${escapeHtml(job.description)}<br>
+                    <small>📍 ${job.city || 'Город не указан'} | Статус: ${job.status === 'open' ? '🔓 Открыта' : (job.status === 'taken' ? '🔨 В работе' : '✅ Завершена')}</small>
+                `;
+                if (job.status === 'taken' && user && (user.id === job.employerId || user.id === job.assignedTo)) {
+                    const chatBtn = document.createElement('button');
+                    chatBtn.innerText = '💬 Чат';
+                    chatBtn.onclick = () => openChat(job.id);
+                    jobDiv.appendChild(chatBtn);
                 }
-                jobDiv.appendChild(responsesDiv);
-            } else {
-                const noResponses = document.createElement('div');
-                noResponses.style.marginTop = '12px';
-                noResponses.style.fontSize = '0.8rem';
-                noResponses.innerText = 'Пока нет откликов';
-                jobDiv.appendChild(noResponses);
+                const responsesRes = await fetch(`/api/responses/by-job/${job.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (responsesRes.ok) {
+                    const responses = await responsesRes.json();
+                    if (responses.length > 0) {
+                        const responsesDiv = document.createElement('div');
+                        responsesDiv.style.marginTop = '12px';
+                        responsesDiv.style.padding = '8px';
+                        responsesDiv.style.borderTop = '1px solid var(--border)';
+                        responsesDiv.innerHTML = '<strong>📞 Отклики:</strong><br>';
+                        for (let r of responses) {
+                            responsesDiv.innerHTML += `
+                                <div style="margin: 6px 0; display: flex; justify-content: space-between; align-items: center;">
+                                    <span>👤 ${escapeHtml(r.candidateEmail)} (${new Date(r.createdAt).toLocaleString()})</span>
+                                    ${job.status === 'open' ? `<button onclick="assignJob(${job.id}, ${r.candidateId})">Назначить</button>` : ''}
+                                </div>
+                            `;
+                        }
+                        jobDiv.appendChild(responsesDiv);
+                    } else {
+                        const noResponses = document.createElement('div');
+                        noResponses.style.marginTop = '12px';
+                        noResponses.style.fontSize = '0.8rem';
+                        noResponses.innerText = 'Пока нет откликов';
+                        jobDiv.appendChild(noResponses);
+                    }
+                }
+                container.appendChild(jobDiv);
             }
         }
-        container.appendChild(jobDiv);
-    }
-}
+
         async function loadMyResponses() {
-    const res = await fetch('/api/my-responses', { headers: { 'Authorization': `Bearer ${token}` } });
-    const responses = await res.json();
-    const container = document.getElementById('myResponsesList');
-    container.innerHTML = '';
-    if (responses.length === 0) { container.innerHTML = '<p>Вы ещё не откликались</p>'; return; }
-    for (let r of responses) {
-        const div = document.createElement('div');
-        div.className = 'job';
-        div.innerHTML = `
-            <strong>${escapeHtml(r.jobTitle)}</strong><br>
-            ${escapeHtml(r.description)}<br>
-            <small>📍 ${r.city || ''}</small><br>
-            <span>📅 ${new Date(r.createdAt).toLocaleString()}</span>
-            <br><span>Статус заявки: ${r.status === 'open' ? '🔓 Открыта' : (r.status === 'taken' ? '🔨 В работе' : '✅ Завершена')}</span>
-        `;
-        
-        // Кнопка чата, если заявка взята в работу и пользователь участник
-        if (r.status === 'taken' && user && (user.id === r.employerId || user.id === r.assignedTo)) {
-            const chatBtn = document.createElement('button');
-            chatBtn.innerText = '💬 Чат';
-            chatBtn.onclick = () => openChat(r.jobId);
-            div.appendChild(chatBtn);
+            const res = await fetch('/api/my-responses', { headers: { 'Authorization': `Bearer ${token}` } });
+            const responses = await res.json();
+            const container = document.getElementById('myResponsesList');
+            container.innerHTML = '';
+            if (responses.length === 0) { container.innerHTML = '<p>Вы ещё не откликались</p>'; return; }
+            for (let r of responses) {
+                const div = document.createElement('div');
+                div.className = 'job';
+                div.innerHTML = `
+                    <strong>${escapeHtml(r.jobTitle)}</strong><br>
+                    ${escapeHtml(r.description)}<br>
+                    <small>📍 ${r.city || ''}</small><br>
+                    <span>📅 ${new Date(r.createdAt).toLocaleString()}</span>
+                    <br><span>Статус заявки: ${r.status === 'open' ? '🔓 Открыта' : (r.status === 'taken' ? '🔨 В работе' : '✅ Завершена')}</span>
+                `;
+                if (r.status === 'taken' && user && (user.id === r.employerId || user.id === r.assignedTo)) {
+                    const chatBtn = document.createElement('button');
+                    chatBtn.innerText = '💬 Чат';
+                    chatBtn.onclick = () => openChat(r.jobId);
+                    div.appendChild(chatBtn);
+                }
+                container.appendChild(div);
+            }
         }
-        container.appendChild(div);
-    }
-}
 
         async function createJob() {
-    if (await checkIfBanned()) return;
-    const title = document.getElementById('jobTitle').value.trim();
-    const description = document.getElementById('jobDesc').value.trim();
-    const category = document.getElementById('jobCategory').value;
-    const city = document.getElementById('jobCity').value.trim();
-    const price = document.getElementById('jobPrice').value;   // <-- добавить эту строку
-    if (!title || !description) { alert('Заполните название и описание'); return; }
-    const res = await fetch('/api/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ title, description, category, city, price })   // <-- добавить price
-    });
-    if (res.ok) {
-        alert('Заявка создана');
-        document.getElementById('jobTitle').value = '';
-        document.getElementById('jobDesc').value = '';
-        document.getElementById('jobCity').value = '';
-        document.getElementById('jobPrice').value = '';   // очищаем поле цены
-        loadJobs();
-        if (myJobsView.style.display !== 'none') loadMyJobs();
-        switchView('feed');
-    } else alert('Ошибка');
-}
+            if (await checkIfBanned()) return;
+            const title = document.getElementById('jobTitle').value.trim();
+            const description = document.getElementById('jobDesc').value.trim();
+            const category = document.getElementById('jobCategory').value;
+            const city = document.getElementById('jobCity').value.trim();
+            const price = document.getElementById('jobPrice').value;
+            if (!title || !description) { alert('Заполните название и описание'); return; }
+            const res = await fetch('/api/jobs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ title, description, category, city, price })
+            });
+            if (res.ok) {
+                alert('Заявка создана');
+                document.getElementById('jobTitle').value = '';
+                document.getElementById('jobDesc').value = '';
+                document.getElementById('jobCity').value = '';
+                document.getElementById('jobPrice').value = '';
+                loadJobs();
+                if (myJobsView.style.display !== 'none') loadMyJobs();
+                switchView('feed');
+            } else alert('Ошибка');
+        }
 
         function switchView(view) {
             feedView.style.display = 'none';
             myJobsView.style.display = 'none';
             myResponsesView.style.display = 'none';
+            const executorChatView = document.getElementById('executorChatView');
+            const profileViewElem = document.getElementById('profileView');
+            if (executorChatView) executorChatView.style.display = 'none';
+            if (profileViewElem) profileViewElem.style.display = 'none';
             if (view === 'feed') feedView.style.display = 'block';
             if (view === 'myJobs') { myJobsView.style.display = 'block'; loadMyJobs(); }
             if (view === 'myResponses') { myResponsesView.style.display = 'block'; loadMyResponses(); }
+            if (view === 'executorChat' && executorChatView) executorChatView.style.display = 'block';
+            if (view === 'executorChat') startExecutorChatPolling();
+            if (view !== 'executorChat') stopExecutorChatPolling();
+            if (view === 'profile' && profileViewElem) profileViewElem.style.display = 'block';
             document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-            if (view === 'feed') document.querySelector('[data-view="feed"]').classList.add('active');
-            if (view === 'myJobs') document.querySelector('[data-view="myJobs"]').classList.add('active');
-            if (view === 'myResponses') document.querySelector('[data-view="myResponses"]').classList.add('active');
+            const activeBtn = document.querySelector(`.nav-item[data-view="${view}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
         }
 
         function escapeHtml(str) {
@@ -607,22 +633,21 @@ async function simulatePayment(jobId) {
             return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
         }
 
-        // Регистрация
         async function register() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
-            const role = document.getElementById('role').value;
-            const city = document.getElementById('city').value.trim();
-            const res = await fetch('/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, role, city })
-            });
-            if (res.ok) showAuthError('✅ Регистрация успешна, войдите');
-            else { const err = await res.json(); showAuthError(err.error); }
-        }
-        
-        // Логин
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const role = document.getElementById('role').value;
+    const city = document.getElementById('city').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role, city, phone })
+    });
+    if (res.ok) showAuthError('✅ Регистрация успешна, войдите');
+    else { const err = await res.json(); showAuthError(err.error); }
+}
+
         async function login() {
             if (await checkIfBanned()) return;
             const email = document.getElementById('email').value.trim();
@@ -640,13 +665,16 @@ async function simulatePayment(jobId) {
                 authBlock.style.display = 'none';
                 mainApp.style.display = 'block';
                 bottomNav.style.display = 'flex';
-                
-                updateUIForRole();   // скрываем/показываем элементы по роли
-                
+                updateUIForRole();
                 loadCityFilter();
                 loadJobs();
                 switchView('feed');
-                
+                // Заполнение профиля
+                if (document.getElementById('profileEmail')) {
+                    document.getElementById('profileEmail').innerText = user.email;
+                    document.getElementById('profileRole').innerText = (user.role === 'candidate' ? 'Кандидат' : (user.role === 'employer' ? 'Работодатель' : 'Админ'));
+                    document.getElementById('profileCity').innerText = user.city || 'не указан';
+                }
                 if (user.role === 'admin') {
                     const adminLink = document.createElement('div');
                     adminLink.innerHTML = '<hr><a href="/admin" target="_blank" style="color: var(--btn-primary);">🛠️ Админ-панель</a>';
@@ -657,13 +685,13 @@ async function simulatePayment(jobId) {
                 showAuthError(err.error);
             }
         }
-        
+
         function showAuthError(msg) {
             const errDiv = document.getElementById('authError');
             errDiv.innerText = msg;
             setTimeout(() => errDiv.innerText = '', 3000);
         }
-        
+
         function logout() {
             localStorage.removeItem('token');
             token = null;
@@ -674,152 +702,150 @@ async function simulatePayment(jobId) {
         }
 
         // Восстановление сессии
-if (token) {
-    fetch('/api/me', { headers: { 'Authorization': `Bearer ${token}` } })
-        .then(res => res.ok ? res.json() : Promise.reject())
-        .then(userData => {
-            user = userData;
-            authBlock.style.display = 'none';
-            mainApp.style.display = 'block';
-            bottomNav.style.display = 'flex';
-            updateUIForRole();
-            loadCityFilter();
-            loadJobs();
-            switchView('feed');
-        })
-        .catch(() => {
-            localStorage.removeItem('token');
-            location.reload();
-        });
-} else {
-    authBlock.style.display = 'block';
-    mainApp.style.display = 'none';
-    bottomNav.style.display = 'none';
-}
-        // Глобальные переменные для чата
-
-let currentChatJobId = null;
-
-async function openChat(jobId) {
-    currentChatJobId = jobId;
-    const modal = document.getElementById('chatModal');
-    modal.style.display = 'block';
-    await loadChatMessages();
-    // Обработчик кнопки отправки (на случай, если он не привязан)
-    const sendBtn = document.getElementById('sendMessageBtn');
-    if (sendBtn) {
-        // Убираем старый обработчик, чтобы не дублировать
-        sendBtn.replaceWith(sendBtn.cloneNode(true));
-        const newBtn = document.getElementById('sendMessageBtn');
-        newBtn.onclick = () => sendChatMessage();
-    }
-    // Обработчик ввода по Enter
-    const input = document.getElementById('chatInput');
-    if (input) {
-        input.onkeypress = (e) => {
-            if (e.key === 'Enter') sendChatMessage();
-        };
-    }
-}
-
-function closeChat() {
-    document.getElementById('chatModal').style.display = 'none';
-    currentChatJobId = null;
-}
-
-async function loadChatMessages() {
-    if (!currentChatJobId) return;
-    try {
-        const res = await fetch(`/api/messages/${currentChatJobId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Ошибка загрузки');
-        const messages = await res.json();
-        const container = document.getElementById('chatMessages');
-        container.innerHTML = '';
-        for (let msg of messages) {
-            const div = document.createElement('div');
-            div.className = 'message';
-            const senderName = (msg.senderId === user.id) ? 'Вы' : (msg.senderId === user.id ? 'Вы' : 'Собеседник');
-            div.innerHTML = `<strong>${senderName}:</strong> ${escapeHtml(msg.message)}<br><small>${new Date(msg.createdAt).toLocaleString()}</small>`;
-            container.appendChild(div);
-        }
-        container.scrollTop = container.scrollHeight;
-    } catch (err) {
-        console.error(err);
-        showNotification('Не удалось загрузить сообщения', 'error');
-    }
-}
-
-async function sendChatMessage() {
-    const input = document.getElementById('chatInput');
-    const message = input.value.trim();
-    if (!message || !currentChatJobId) {
-        showNotification('Введите сообщение', 'error');
-        return;
-    }
-    try {
-        const res = await fetch('/api/messages', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ jobId: currentChatJobId, message })
-        });
-        if (res.ok) {
-            input.value = '';
-            await loadChatMessages();
+        if (token) {
+            fetch('/api/me', { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(res => res.ok ? res.json() : Promise.reject())
+                .then(userData => {
+                    user = userData;
+                    // Заполнение профиля
+                    if (document.getElementById('profileEmail')) {
+                        document.getElementById('profileEmail').innerText = user.email;
+                        document.getElementById('profileRole').innerText = (user.role === 'candidate' ? 'Кандидат' : (user.role === 'employer' ? 'Работодатель' : 'Админ'));
+                        document.getElementById('profileCity').innerText = user.city || 'не указан';
+                    }
+                    authBlock.style.display = 'none';
+                    mainApp.style.display = 'block';
+                    bottomNav.style.display = 'flex';
+                    updateUIForRole();
+                    loadCityFilter();
+                    loadJobs();
+                    switchView('feed');
+                })
+                .catch(() => {
+                    localStorage.removeItem('token');
+                    location.reload();
+                });
         } else {
-            const errData = await res.json();
-            showNotification(errData.error || 'Ошибка отправки', 'error');
+            authBlock.style.display = 'block';
+            mainApp.style.display = 'none';
+            bottomNav.style.display = 'none';
         }
-    } catch (err) {
-        showNotification('Ошибка сети', 'error');
-    }
-}
-// Закрытие модального окна
-document.getElementById('closeChat').onclick = closeChat;
-window.onclick = function(event) {
-  const modal = document.getElementById('chatModal');
-  if (event.target === modal) closeChat();
-};
-document.getElementById('sendMessageBtn').onclick = sendChatMessage;
-// Проверка, не забанен ли пользователь
-async function checkIfBanned() {
-    if (!user) return false;
-    try {
-        const res = await fetch('/api/blacklist', { headers: { 'Authorization': `Bearer ${token}` } });
-        if (res.ok) {
-            const blacklist = await res.json();
-            const isBanned = blacklist.some(b => b.userId === user.id);
-            if (isBanned) {
-                showNotification('⚠️ Вы забанены администратором. Вы не можете создавать заявки или откликаться.', 'error');
-                // Скрыть формы и кнопки
-                const createForm = document.getElementById('createJobForm');
-                if (createForm) createForm.style.display = 'none';
-                return true;
+
+        // Чат по заявке
+        let currentChatJobId = null;
+        let chatInterval = null;
+
+        async function openChat(jobId) {
+            currentChatJobId = jobId;
+            const modal = document.getElementById('chatModal');
+            modal.style.display = 'block';
+            await loadChatMessages();
+            if (chatInterval) clearInterval(chatInterval);
+            chatInterval = setInterval(loadChatMessages, 3000);
+            const sendBtn = document.getElementById('sendMessageBtn');
+            if (sendBtn) {
+                sendBtn.replaceWith(sendBtn.cloneNode(true));
+                const newBtn = document.getElementById('sendMessageBtn');
+                newBtn.onclick = () => sendChatMessage();
+            }
+            const input = document.getElementById('chatInput');
+            if (input) {
+                input.onkeypress = (e) => {
+                    if (e.key === 'Enter') sendChatMessage();
+                };
             }
         }
-        return false;
-    } catch (err) {
-        return false;
-    }
-}
-function showNotification(msg, type) {
-    const notif = document.createElement('div');
-    notif.style.position = 'fixed';
-    notif.style.bottom = '80px';
-    notif.style.left = '20px';
-    notif.style.right = '20px';
-    notif.style.backgroundColor = type === 'success' ? '#10b981' : '#ef4444';
-    notif.style.color = 'white';
-    notif.style.padding = '12px';
-    notif.style.borderRadius = '20px';
-    notif.style.textAlign = 'center';
-    notif.style.zIndex = '1000';
-    notif.innerText = msg;
-    document.body.appendChild(notif);
-    setTimeout(() => notif.remove(), 3000);
-}
 
+        function closeChat() {
+            const modal = document.getElementById('chatModal');
+            if (modal) modal.style.display = 'none';
+            if (chatInterval) clearInterval(chatInterval);
+            currentChatJobId = null;
+        }
+
+        async function loadChatMessages() {
+            if (!currentChatJobId) return;
+            try {
+                const res = await fetch(`/api/messages/${currentChatJobId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Ошибка загрузки');
+                const messages = await res.json();
+                const container = document.getElementById('chatMessages');
+                container.innerHTML = '';
+                for (let msg of messages) {
+                    const div = document.createElement('div');
+                    div.className = 'message';
+                    const senderName = (msg.senderId === user.id) ? 'Вы' : 'Собеседник';
+                    div.innerHTML = `<strong>${senderName}:</strong> ${escapeHtml(msg.message)}<br><small>${new Date(msg.createdAt).toLocaleString()}</small>`;
+                    container.appendChild(div);
+                }
+                container.scrollTop = container.scrollHeight;
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message || !currentChatJobId) return;
+            try {
+                const res = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ jobId: currentChatJobId, message })
+                });
+                if (res.ok) {
+                    input.value = '';
+                    await loadChatMessages();
+                } else {
+                    const errData = await res.json();
+                    showNotification(errData.error || 'Ошибка отправки', 'error');
+                }
+            } catch (err) {
+                showNotification('Ошибка сети', 'error');
+            }
+        }
+
+        async function checkIfBanned() {
+            if (!user) return false;
+            try {
+                const res = await fetch('/api/blacklist', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const blacklist = await res.json();
+                    const isBanned = blacklist.some(b => b.userId === user.id);
+                    if (isBanned) {
+                        showNotification('⚠️ Вы забанены администратором. Вы не можете создавать заявки или откликаться.', 'error');
+                        const createForm = document.getElementById('createJobForm');
+                        if (createForm) createForm.style.display = 'none';
+                        return true;
+                    }
+                }
+                return false;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        function showNotification(msg, type) {
+            const notif = document.createElement('div');
+            notif.style.position = 'fixed';
+            notif.style.bottom = '80px';
+            notif.style.left = '20px';
+            notif.style.right = '20px';
+            notif.style.backgroundColor = type === 'success' ? '#10b981' : '#ef4444';
+            notif.style.color = 'white';
+            notif.style.padding = '12px';
+            notif.style.borderRadius = '20px';
+            notif.style.textAlign = 'center';
+            notif.style.zIndex = '1000';
+            notif.innerText = msg;
+            document.body.appendChild(notif);
+            setTimeout(() => notif.remove(), 3000);
+        }
+
+        // Обработчики кнопок и окон
         window.register = register;
         window.login = login;
         window.logout = logout;
@@ -828,93 +854,127 @@ function showNotification(msg, type) {
         window.assignJob = assignJob;
         window.deleteJob = deleteJob;
         window.switchView = switchView;
-        // ========== УЛУЧШЕННОЕ ЗАКРЫТИЕ ЧАТА ==========
-const modal = document.getElementById('chatModal');
-const closeSpan = document.getElementById('closeChat');
-const closeBtn = document.getElementById('closeChatBtn');
+        window.openChat = openChat;
+        window.closeChat = closeChat;
+        window.simulatePayment = simulatePayment;
 
-function closeChatModal() {
-    if (modal) modal.style.display = 'none';
-    currentChatJobId = null;
+        document.getElementById('closeChat')?.addEventListener('click', closeChat);
+        document.getElementById('sendMessageBtn')?.addEventListener('click', sendChatMessage);
+        document.getElementById('logoutBtnFromProfile')?.addEventListener('click', () => logout());
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('chatModal');
+            if (event.target === modal) closeChat();
+        };
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && document.getElementById('chatModal')?.style.display === 'block') {
+                closeChat();
+            }
+        });
+
+        // PWA установка
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installButton').style.display = 'inline-block';
+        });
+        document.getElementById('installButton').addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Пользователь установил приложение');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        });
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('installButton').style.display = 'none';
+        });
+
+        // Автообновление PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(reg => {
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            const updateConfirm = confirm('✅ Доступна новая версия приложения.\nОбновить сейчас?');
+                            if (updateConfirm) {
+                                newWorker.postMessage({ action: 'skipWaiting' });
+                                window.location.reload();
+                            }
+                        }
+                    });
+                });
+            });
+        }
+        // ========== ОБЩИЙ ЧАТ ИСПОЛНИТЕЛЕЙ ==========
+let executorChatInterval = null;
+
+async function loadExecutorChatMessages() {
+    try {
+        const res = await fetch('/api/general-chat/messages', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Ошибка загрузки');
+        const messages = await res.json();
+        const container = document.getElementById('executorChatMessages');
+        if (!container) return;
+        container.innerHTML = '';
+        for (let msg of messages) {
+            const div = document.createElement('div');
+            div.className = 'message';
+            // Получаем имя пользователя по userId (можно упростить: показывать id)
+            div.innerHTML = `<strong>Пользователь ${msg.userId}:</strong> ${escapeHtml(msg.message)}<br><small>${new Date(msg.createdAt).toLocaleString()}</small>`;
+            container.appendChild(div);
+        }
+        container.scrollTop = container.scrollHeight;
+    } catch (err) {
+        console.error(err);
+    }
 }
 
-// Крестик
-if (closeSpan) closeSpan.onclick = closeChatModal;
-// Кнопка "Закрыть"
-if (closeBtn) closeBtn.onclick = closeChatModal;
-// Клик по фону
-window.onclick = function(event) {
-    if (event.target === modal) closeChatModal();
-};
-// Закрытие по Escape
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape' && modal && modal.style.display === 'block') {
-        closeChatModal();
+async function sendExecutorChatMessage() {
+    const input = document.getElementById('executorChatInput');
+    const message = input.value.trim();
+    if (!message) return;
+    try {
+        const res = await fetch('/api/general-chat/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ message })
+        });
+        if (res.ok) {
+            input.value = '';
+            await loadExecutorChatMessages();
+        } else {
+            const err = await res.json();
+            showNotification(err.error || 'Ошибка отправки', 'error');
+        }
+    } catch (err) {
+        showNotification('Ошибка сети', 'error');
     }
+}
+
+function startExecutorChatPolling() {
+    if (executorChatInterval) clearInterval(executorChatInterval);
+    loadExecutorChatMessages();
+    executorChatInterval = setInterval(loadExecutorChatMessages, 3000);
+}
+
+function stopExecutorChatPolling() {
+    if (executorChatInterval) {
+        clearInterval(executorChatInterval);
+        executorChatInterval = null;
+    }
+}
+document.getElementById('sendExecutorChatBtn')?.addEventListener('click', sendExecutorChatMessage);
+document.getElementById('executorChatInput')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendExecutorChatMessage();
 });
     </script>
-    <div id="chatModal" class="modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeChat()">&times;</span>
-    <h3>💬 Чат по заявке</h3>
-    <div id="chatMessages"></div>
-    <input type="text" id="chatInput" placeholder="Введите сообщение...">
-    <div style="display: flex; gap: 8px; margin-top: 8px;">
-      <button id="sendMessageBtn" style="flex: 2;">📤 Отправить</button>
-      <button onclick="closeChat()" style="flex: 1; background: #6b7280;">✖ Закрыть</button>
-    </div>
-  </div>
-</div>
-</div>
-<button id="installButton" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; display: none;">📱 Установить приложение</button>
-
-<script>
-  let deferredPrompt;
-
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    document.getElementById('installButton').style.display = 'inline-block';
-  });
-
-  document.getElementById('installButton').addEventListener('click', () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('Пользователь установил приложение');
-        } else {
-          console.log('Пользователь отказался от установки');
-        }
-        deferredPrompt = null;
-      });
-    }
-  });
-
-  window.addEventListener('appinstalled', () => {
-    console.log('PWA установлено');
-    document.getElementById('installButton').style.display = 'none';
-  });
-</script>
-<script>
-  // Автоматическое обновление PWA без переустановки
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
-        reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    // Показываем кнопку или confirm
-                    const updateConfirm = confirm('✅ Доступна новая версия приложения.\nОбновить сейчас?');
-                    if (updateConfirm) {
-                        newWorker.postMessage({ action: 'skipWaiting' });
-                        window.location.reload();
-                    }
-                }
-            });
-        });
-    });
-}
-</script>
 </body>
 </html>
