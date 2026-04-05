@@ -189,19 +189,62 @@ app.post('/api/jobs', auth, checkBanned, (req, res) => {
 });
 
 app.get('/api/jobs', (req, res) => {
-  const { city } = req.query;
-  // Получаем токен и определяем пользователя
+  const { city, all } = req.query;
   const token = req.headers.authorization?.split(' ')[1];
   let userId = null;
+  let userRole = null;
   if (token) {
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
       userId = decoded.id;
+      userRole = decoded.role;
     } catch(e) {}
   }
 
+  // Если работодатель и нет флага all=true – показываем только его заявки
+  if (userRole === 'employer' && all !== 'true') {
+    let sql = 'SELECT * FROM jobs WHERE employerId = ?';
+    let params = [userId];
+    // Дополнительный фильтр по городу, если передан
+    if (city && city !== 'all') {
+      sql += ' AND city = ?';
+      params.push(city);
+    }
+    sql += ' ORDER BY createdAt DESC';
+    db.all(sql, params, (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+    return;
+  }
+
+  // Для кандидатов и админов (или если all=true) – логика с городом по умолчанию
+  function buildQuery(cityParam, userCity) {
+    let sql = 'SELECT * FROM jobs';
+    let params = [];
+    let conditions = [];
+
+    if (cityParam && cityParam !== 'all') {
+      conditions.push('city = ?');
+      params.push(cityParam);
+    } else if (!cityParam && userCity && userRole !== 'employer') {
+      // Для кандидатов и админов – по умолчанию заявки из их города
+      conditions.push('city = ?');
+      params.push(userCity);
+    }
+    // Если cityParam === 'all' – не добавляем фильтр
+
+    if (conditions.length) {
+      sql += ' WHERE ' + conditions.join(' AND ');
+    }
+    sql += ' ORDER BY createdAt DESC';
+    db.all(sql, params, (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    });
+  }
+
   if (userId) {
-    // Если пользователь авторизован, берём его город из БД
     db.get('SELECT city FROM users WHERE id = ?', [userId], (err, user) => {
       if (err) return res.status(500).json({ error: err.message });
       const userCity = user ? user.city : null;
@@ -210,6 +253,7 @@ app.get('/api/jobs', (req, res) => {
   } else {
     buildQuery(city, null);
   }
+});
 
   function buildQuery(cityParam, userCity) {
     let sql = 'SELECT * FROM jobs';
@@ -237,7 +281,6 @@ app.get('/api/jobs', (req, res) => {
       res.json(rows);
     });
   }
-});
 
 app.get('/api/my-jobs', auth, (req, res) => {
   db.all('SELECT * FROM jobs WHERE employerId = ? ORDER BY createdAt DESC', [req.user.id], (err, rows) => {

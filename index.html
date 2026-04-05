@@ -377,20 +377,24 @@
         }
 
         async function loadCityFilter() {
-            const res = await fetch('/api/jobs?city=all');
-            const jobs = await res.json();
-            const cities = [...new Set(jobs.map(j => j.city).filter(c => c))];
-            const select = document.getElementById('cityFilter');
-            select.innerHTML = '<option value="all">Все города</option>';
-            cities.forEach(city => {
-                const opt = document.createElement('option');
-                opt.value = city;
-                opt.textContent = city;
-                select.appendChild(opt);
-            });
-            select.onchange = () => loadJobs();
-        }
-
+    const res = await fetch('/api/jobs?city=all');
+    const jobs = await res.json();
+    let cities = [...new Set(jobs.map(j => j.city).filter(c => c))];
+    // Переносим город пользователя в начало списка
+    if (user && user.city && cities.includes(user.city)) {
+        cities = [user.city, ...cities.filter(c => c !== user.city)];
+    }
+    const select = document.getElementById('cityFilter');
+    select.innerHTML = '<option value="all">Все города</option>';
+    cities.forEach(city => {
+        const opt = document.createElement('option');
+        opt.value = city;
+        opt.textContent = city;
+        if (user && user.city === city) opt.selected = true;
+        select.appendChild(opt);
+    });
+    select.onchange = () => loadJobs();
+}
         async function loadJobs() {
             const cityFilter = document.getElementById('cityFilter').value;
             let url = '/api/jobs';
