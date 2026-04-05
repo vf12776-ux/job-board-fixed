@@ -120,11 +120,11 @@ const checkBanned = (req, res, next) => {
 // ========== ПОЛЬЗОВАТЕЛИ ==========
 app.post('/api/register', (req, res) => {
   const { email, password, role, city, phone } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  if (!email || !password) return res.status(400).json({ error: 'Требуются email и пароль' });
   const hashed = bcrypt.hashSync(password, 10);
   db.run('INSERT INTO users (email, password, role, city, phone) VALUES (?, ?, ?, ?, ?)',
     [email, hashed, role || 'candidate', city || '', phone || ''], function(err) {
-      if (err) return res.status(400).json({ error: 'User already exists' });
+      if (err) return res.status(400).json({ error: 'Пользователь с таким email уже существует' });
       res.json({ id: this.lastID, email, role: role || 'candidate', city: city || '', phone: phone || '' });
     });
 });
@@ -133,7 +133,7 @@ app.post('/api/login', (req, res) => {
   const { email, password } = req.body;
   db.get('SELECT * FROM users WHERE email = ?', [email], (err, user) => {
     if (!user || !bcrypt.compareSync(password, user.password)) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Неверный email или пароль' });
     }
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET);
     res.json({ token, user: { id: user.id, email: user.email, role: user.role, city: user.city, phone: user.phone } });
@@ -142,7 +142,7 @@ app.post('/api/login', (req, res) => {
 
 app.get('/api/me', auth, (req, res) => {
   db.get('SELECT id, email, role, city, phone FROM users WHERE id = ?', [req.user.id], (err, user) => {
-    if (err || !user) return res.status(404).json({ error: 'User not found' });
+    if (err || !user) return res.status(404).json({ error: 'Пользователь не найден' });
     db.get('SELECT * FROM blacklist WHERE userId = ?', [user.id], (err, banned) => {
       res.json({
         id: user.id,
@@ -157,7 +157,7 @@ app.get('/api/me', auth, (req, res) => {
 });
 
 app.get('/api/users', auth, (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
   db.all('SELECT id, email, role, city, phone FROM users', (err, rows) => {
     res.json(rows);
   });
@@ -290,7 +290,7 @@ app.get('/api/my-jobs', auth, (req, res) => {
 
 app.delete('/api/jobs/:id', auth, (req, res) => {
   db.get('SELECT employerId FROM jobs WHERE id = ?', [req.params.id], (err, job) => {
-    if (!job) return res.status(404).json({ error: 'Job not found' });
+    if (!job) return res.status(404).json({ error: 'Заявка не найдена' });
     if (req.user.role !== 'admin' && job.employerId !== req.user.id) {
       return res.status(403).json({ error: 'Forbidden' });
     }
@@ -309,7 +309,7 @@ app.put('/api/jobs/:jobId/assign', auth, (req, res) => {
     if (job.employerId !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Forbidden' });
     }
-    if (job.status !== 'open') return res.status(400).json({ error: 'Job already taken or completed' });
+    if (job.status !== 'open') return res.status(400).json({ error: 'Заявка уже взята в работу или завершена' });
     db.run('UPDATE jobs SET assignedTo = ?, status = ? WHERE id = ?', [candidateId, 'taken', jobId], (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true });
@@ -320,10 +320,10 @@ app.put('/api/jobs/:jobId/assign', auth, (req, res) => {
 // ========== ОТКЛИКИ ==========
 app.post('/api/responses', auth, checkBanned, (req, res) => {
   if (req.user.role !== 'candidate') {
-    return res.status(403).json({ error: 'Only candidates can respond' });
+    return res.status(403).json({ error: 'Только исполнители могут откликаться' });
   }
   const { jobId } = req.body;
-  if (!jobId) return res.status(400).json({ error: 'jobId required' });
+  if (!jobId) return res.status(400).json({ error: 'Требуется идентификатор заявки' });
 
   db.serialize(() => {
     db.run('BEGIN IMMEDIATE');
@@ -331,21 +331,21 @@ app.post('/api/responses', auth, checkBanned, (req, res) => {
     db.get('SELECT * FROM jobs WHERE id = ?', [jobId], (err, job) => {
       if (err || !job) {
         db.run('ROLLBACK');
-        return res.status(404).json({ error: 'Job not found' });
+        return res.status(404).json({ error: 'Заявка не найдена' });
       }
       if (job.employerId === req.user.id) {
         db.run('ROLLBACK');
-        return res.status(400).json({ error: 'You cannot respond to your own job' });
+        return res.status(400).json({ error: 'Нельзя откликаться на свою заявку' });
       }
       if (job.status !== 'open') {
         db.run('ROLLBACK');
-        return res.status(400).json({ error: 'Job is already taken or completed' });
+        return res.status(400).json({ error: 'Заявка уже взята в работу или завершена' });
       }
 
       db.get('SELECT id FROM responses WHERE jobId = ? AND candidateId = ?', [jobId, req.user.id], (err, existing) => {
         if (existing) {
           db.run('ROLLBACK');
-          return res.status(400).json({ error: 'Already responded' });
+          return res.status(400).json({ error: 'Вы уже откликались на эту заявку. Хорош!' });
         }
 
         db.get('SELECT COUNT(*) as count FROM responses WHERE jobId = ?', [jobId], (err, countResult) => {
@@ -429,10 +429,10 @@ app.get('/api/my-responses', auth, (req, res) => {
 app.get('/api/messages/:jobId', auth, (req, res) => {
   const jobId = req.params.jobId;
   db.get('SELECT employerId, assignedTo FROM jobs WHERE id = ?', [jobId], (err, job) => {
-    if (!job) return res.status(404).json({ error: 'Job not found' });
+    if (!job) return res.status(404).json({ error: 'Заявка не найдена' });
     const isParticipant = (req.user.id === job.employerId || req.user.id === job.assignedTo);
     if (!isParticipant && req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Forbidden' });
+      return res.status(403).json({ error: 'Доступ запрещен' });
     }
     db.all('SELECT * FROM messages WHERE jobId = ? ORDER BY createdAt ASC', [jobId], (err, rows) => {
       res.json(rows);
@@ -467,7 +467,7 @@ app.get('/api/general-chat/messages', auth, (req, res) => {
 
 app.post('/api/general-chat/messages', auth, (req, res) => {
   if (req.user.role !== 'candidate' && req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Only executors can post to general chat' });
+    return res.status(403).json({ error: 'Только исполнители могут писать в общий чат' });
   }
   const { message } = req.body;
   if (!message) return res.status(400).json({ error: 'Message required' });
@@ -480,7 +480,7 @@ app.post('/api/general-chat/messages', auth, (req, res) => {
 
 // ========== ЧЁРНЫЙ СПИСОК ==========
 app.get('/api/blacklist', auth, (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещен' });
   db.all(`
     SELECT b.userId, u.email, u.role, b.reason, b.bannedAt
     FROM blacklist b
@@ -491,7 +491,7 @@ app.get('/api/blacklist', auth, (req, res) => {
 });
 
 app.post('/api/blacklist', auth, (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещен' });
   const { userId, reason } = req.body;
   db.run('INSERT OR REPLACE INTO blacklist (userId, reason, bannedAt) VALUES (?, ?, ?)',
     [userId, reason || 'No reason', new Date().toISOString()], function(err) {
@@ -501,7 +501,7 @@ app.post('/api/blacklist', auth, (req, res) => {
 });
 
 app.delete('/api/blacklist/:userId', auth, (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещен' });
   db.run('DELETE FROM blacklist WHERE userId = ?', [req.params.userId], function(err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ success: true });
@@ -512,10 +512,10 @@ app.delete('/api/blacklist/:userId', auth, (req, res) => {
 app.post('/api/pay/:jobId', auth, (req, res) => {
   const jobId = req.params.jobId;
   db.get('SELECT employerId, paymentStatus, price FROM jobs WHERE id = ?', [jobId], (err, job) => {
-    if (!job) return res.status(404).json({ error: 'Job not found' });
-    if (job.employerId !== req.user.id) return res.status(403).json({ error: 'Not your job' });
-    if (job.paymentStatus !== 'pending') return res.status(400).json({ error: 'Already paid' });
-    if (job.price <= 0) return res.status(400).json({ error: 'Invalid price' });
+    if (!job) return res.status(404).json({ error: 'Заявка не найдена' });
+    if (job.employerId !== req.user.id) return res.status(403).json({ error: 'Не твоя заявка' });
+    if (job.paymentStatus !== 'pending') return res.status(400).json({ error: 'Уже оплачено' });
+    if (job.price <= 0) return res.status(400).json({ error: 'Неверная цена' });
     
     db.run('UPDATE jobs SET paymentStatus = ? WHERE id = ?', ['paid', jobId], (err) => {
       if (err) return res.status(500).json({ error: err.message });
