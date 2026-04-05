@@ -83,6 +83,9 @@ db.serialize(() => {
   db.run("ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ''", (err) => {
     if (err && !err.message.includes('duplicate column name')) console.log(err);
   });
+  db.run("ALTER TABLE users ADD COLUMN name TEXT DEFAULT ''", (err) => {
+  if (err && !err.message.includes('duplicate column name')) console.log(err);
+});
 
   // Создание админа
   const adminEmail = 'admin@example.com';
@@ -522,6 +525,16 @@ app.post('/api/pay/:jobId', auth, (req, res) => {
       res.json({ success: true, message: 'Оплата прошла успешно (симуляция)', jobId });
     });
   });
+});
+app.put('/api/users/profile', auth, (req, res) => {
+  const { name, phone, city } = req.body;
+  const userId = req.user.id;
+  db.run('UPDATE users SET name = ?, phone = ?, city = ? WHERE id = ?',
+    [name || '', phone || '', city || '', userId],
+    function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true, user: { id: userId, name, phone, city } });
+    });
 });
 
 // ========== СТАТИЧЕСКИЕ ФАЙЛЫ ==========

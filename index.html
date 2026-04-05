@@ -266,15 +266,25 @@
 
             <!-- Профиль -->
             <div id="profileView" style="display: none;">
-                <div class="card">
-                    <h2>👤 Профиль</h2>
-                    <p><strong>Email:</strong> <span id="profileEmail"></span></p>
-                    <p><strong>Роль:</strong> <span id="profileRole"></span></p>
-                    <p><strong>Город:</strong> <span id="profileCity"></span></p>
-                    <p><strong>Телефон:</strong> <span id="profilePhone"></span></p>
-                    <button id="logoutBtnFromProfile" style="background: #6b7280;">Выйти</button>
-                </div>
-            </div>
+    <div class="card">
+        <h2>👤 Профиль</h2>
+        <div id="profileDisplay">
+            <p><strong>Имя:</strong> <span id="profileName"></span> <button id="editProfileBtn">✏️ Редактировать</button></p>
+            <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+            <p><strong>Роль:</strong> <span id="profileRole"></span></p>
+            <p><strong>Телефон:</strong> <span id="profilePhone"></span></p>
+            <p><strong>Город:</strong> <span id="profileCity"></span></p>
+            <button id="logoutBtnFromProfile">Выйти</button>
+        </div>
+        <div id="profileEditForm" style="display: none;">
+            <input type="text" id="editName" placeholder="Имя">
+            <input type="tel" id="editPhone" placeholder="Телефон">
+            <input type="text" id="editCity" placeholder="Город">
+            <button id="saveProfileBtn">💾 Сохранить</button>
+            <button id="cancelEditBtn">Отмена</button>
+        </div>
+    </div>
+</div>
 
             <!-- Форма создания заявки -->
             <div id="createJobForm" class="card" style="display: none;">
@@ -687,6 +697,7 @@
                     document.getElementById('profileRole').innerText = (user.role === 'candidate' ? 'Кандидат' : (user.role === 'employer' ? 'Работодатель' : 'Админ'));
                     document.getElementById('profileCity').innerText = user.city || 'не указан';
                     document.getElementById('profilePhone').innerText = user.phone || 'не указан';
+                    document.getElementById('profileName').innerText = user.name || '—';
                 }
                 if (user.role === 'admin') {
                     const adminLink = document.createElement('div');
@@ -725,6 +736,7 @@
                         document.getElementById('profileRole').innerText = (user.role === 'candidate' ? 'Кандидат' : (user.role === 'employer' ? 'Работодатель' : 'Админ'));
                         document.getElementById('profileCity').innerText = user.city || 'не указан';
                         document.getElementById('profilePhone').innerText = user.phone || 'не указан';
+                        document.getElementById('profileName').innerText = user.name || '—';
                     }
                     authBlock.style.display = 'none';
                     mainApp.style.display = 'block';
@@ -953,6 +965,59 @@
         document.getElementById('executorChatInput')?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendExecutorChatMessage();
         });
+        // Редактирование профиля
+const editBtn = document.getElementById('editProfileBtn');
+const saveBtn = document.getElementById('saveProfileBtn');
+const cancelBtn = document.getElementById('cancelEditBtn');
+const displayDiv = document.getElementById('profileDisplay');
+const editDiv = document.getElementById('profileEditForm');
+
+editBtn?.addEventListener('click', () => {
+    document.getElementById('editName').value = document.getElementById('profileName').innerText;
+    document.getElementById('editPhone').value = document.getElementById('profilePhone').innerText;
+    document.getElementById('editCity').value = document.getElementById('profileCity').innerText;
+    displayDiv.style.display = 'none';
+    editDiv.style.display = 'block';
+});
+
+cancelBtn?.addEventListener('click', () => {
+    displayDiv.style.display = 'block';
+    editDiv.style.display = 'none';
+});
+
+saveBtn?.addEventListener('click', async () => {
+    const name = document.getElementById('editName').value.trim();
+    const phone = document.getElementById('editPhone').value.trim();
+    const city = document.getElementById('editCity').value.trim();
+    try {
+        const res = await fetch('/api/users/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ name, phone, city })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            // Обновляем отображение
+            document.getElementById('profileName').innerText = name || '—';
+            document.getElementById('profilePhone').innerText = phone || '—';
+            document.getElementById('profileCity').innerText = city || '—';
+            // Обновляем глобальный объект user
+            user.name = name;
+            user.phone = phone;
+            user.city = city;
+            // Обновляем краткую карточку
+            document.getElementById('userCityDisplay').innerText = city || 'не указан';
+            showNotification('✅ Профиль обновлён', 'success');
+            displayDiv.style.display = 'block';
+            editDiv.style.display = 'none';
+        } else {
+            const err = await res.json();
+            showNotification(err.error || 'Ошибка обновления', 'error');
+        }
+    } catch (err) {
+        showNotification('Ошибка сети', 'error');
+    }
+});
 
         window.onclick = function(event) {
             const modal = document.getElementById('chatModal');
